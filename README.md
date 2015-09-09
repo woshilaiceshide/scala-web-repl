@@ -62,7 +62,11 @@ build Scala-Web-REPL
 	
 
 ## TODO
-I'll write some utilities to help introspection for applications based on akka, spray and play. Any interested guy is appreciated.
+* I'll write some utilities to help introspection for applications based on akka, spray and play. Any interested guy is appreciated.
+
+* How to authenticate clients?
+
+* How to forbid `'System.exit(-1)'`, or more sophisticated restrictions?
 
 ## Enjoy It
 Any feedback is expected.
