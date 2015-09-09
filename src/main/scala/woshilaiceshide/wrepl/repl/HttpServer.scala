@@ -124,8 +124,8 @@ class HttpServer(interface: String, port: Int, born: Bridge.TaskRunner => Bridge
 
   lazy val server = default_server
 
-  def start() = {
-    server.start(false)
+  def start(asynchronously: Boolean) = {
+    server.start(asynchronously)
   }
 
   def stop(timeout: Int) = {

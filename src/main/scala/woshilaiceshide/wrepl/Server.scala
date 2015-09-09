@@ -15,7 +15,7 @@ class Server(interface: String, port: Int, parameters: Seq[NamedParam], settings
     }, max_lines_kept_in_output_cache, repl_max_idle_time_in_seconds)
   })
 
-  def start() { httpServer.start() }
+  def start(asynchronously: Boolean = false) { httpServer.start(asynchronously) }
   def stop(timeout: Int) { httpServer.stop(timeout) }
 
 }
