@@ -1,11 +1,15 @@
 # Scala-Web-REPL
 Scala-Web-REPL uses a web terminal as the interactive console. Especially, it can be used as a inspector for applications, or even as a hot code modification mechanism.
 
+It uses a scala interpreter to execute codes internally. If NO connected clients, this internal interpreter will be closed after 60 seconds(configurable).  
+
 ## Show
 ![image](https://raw.githubusercontent.com/woshilaiceshide/scala-web-repl/master/scala-web-repl.jpg)
 
 ## The Http Server
-I wrote both a nio-socket server and a http server for Scala-Web-REPL. You can see it in https://github.com/woshilaiceshide/s-server .
+After searching a small http server several days, I planned to write one for Scala-Web-REPL, which is named s-server. You can see it in https://github.com/woshilaiceshide/s-server . 
+
+At the very beginning, s-server is intended for a dedicated server for this project, which helps saving resource and simplifing development. But now it's a general nio socket server and a http server, and will be evolve independently. 
 
 ## How to Build It?
 1.
