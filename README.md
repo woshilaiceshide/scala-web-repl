@@ -66,7 +66,7 @@ build Scala-Web-REPL
 
 * How to authenticate clients?
 
-* How to forbid `'System.exit(-1)'`, or more sophisticated restrictions?
+* How to forbid `'System.exit(-1)'`, or do more sophisticated restrictions?
 
 * Will some jvm options make Scala-Web-REPL sad?
 
