@@ -7,9 +7,9 @@ It uses a scala interpreter to execute codes internally. If NO connected clients
 ![image](https://raw.githubusercontent.com/woshilaiceshide/scala-web-repl/master/scala-web-repl.jpg)
 
 ## The Http Server
-After searching a small http server several days, I planned to write one for Scala-Web-REPL, which is named s-server. You can see it in https://github.com/woshilaiceshide/s-server . 
+After searching a small http server for several days, I planned to write one for Scala-Web-REPL, which is named s-server. You can see it on https://github.com/woshilaiceshide/s-server . 
 
-At the very beginning, s-server is intended for a dedicated server for this project, which helps saving resource and simplifing development. But now it's a general nio socket server and a http server, and will be evolve independently. 
+At the very beginning, s-server is intended for a dedicated server for this project, which helps saving resource and simplifing development. But now it's a general nio socket server and a general http server, and will evolve independently. 
 
 ## How to Build It?
 1.
