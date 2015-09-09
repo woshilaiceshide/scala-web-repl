@@ -9,7 +9,8 @@ I wrote both a nio-socket server and a http server for Scala-Web-REPL. You can s
 
 ## How to Build It?
 1.
-build s-server, which provides `'HTTP'`, from https://github.com/woshilaiceshide/s-server . Maybe you can just `'publishLocal'` for test. 
+build s-server, which provides `'HTTP'`, from https://github.com/woshilaiceshide/s-server . Maybe you can just `'publishLocal'` for test.
+ 
 2.
 build Scala-Web-REPL
 * git clone https://github.com/woshilaiceshide/scala-web-repl.git
