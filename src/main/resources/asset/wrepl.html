@@ -1,0 +1,321 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
+<html>
+<head>
+<title>scala-web-repl</title>
+<meta name="Content-Type" content="text/html; charset=UTF-8">
+<script type="text/javascript" src="/asset/json2.js"></script>
+<script type="text/javascript" src="/asset/jquery-2.1.1.min.js"></script>
+<script type="text/javascript" src="/asset/jquery.console.js"></script>
+<script type="text/javascript">
+	var work = function() {
+
+		function find_common_prefix(strings) {
+			if (0 == strings.length)
+				return strings[0];
+
+			var i = 0;
+			while (true) {
+				if (i >= strings[0].length)
+					break;
+				var c = strings[0].charAt(i);
+				var should_continue = true;
+				for (var j = 1; j < strings.length; j++) {
+					var s = strings[j];
+					if (i >= s.length) {
+						should_continue = false;
+						break;
+					} else if (c != s.charAt(i)) {
+						should_continue = false;
+						break;
+					}
+				}
+				;
+				if (should_continue) {
+					i = i + 1;
+				} else {
+					break;
+				}
+			}
+			return strings[0].substring(0, i);
+		}
+		;
+
+		var mycars = new Array()
+		mycars[0] = "gri"
+		mycars[1] = "grj"
+		var ggyy = find_common_prefix(mycars);
+
+		function info(msg) {
+			$("#info").css("color", "green");
+			$("#info").text(msg);
+		}
+		;
+
+		function connected() {
+			info("connected");
+			$("#disconnect").show();
+		}
+		;
+		function disconnected(msg, reconnect_forcely) {
+			$("#disconnect").hide();
+			$("#info").css("color", "red");
+			$("#info").text(msg);
+			if (reconnect_forcely) {
+				$("#connect_forcely").show()
+			} else {
+				$("#connect").show()
+			}
+
+		}
+		;
+
+		$("#connect").click(function() {
+			info("connecting...");
+			$("#connect").hide();
+			connect(false);
+			return false;
+		});
+
+		$("#connect_forcely").click(function() {
+			info("connecting forcely...");
+			$("#connect_forcely").hide();
+			connect(true);
+			return false;
+		});
+
+		$("#disconnect").click(function() {
+			//info("disconnection...");
+			$("#disconnect").hide();
+			if (null != websocket) {
+				websocket.close();
+			}
+			return false;
+		});
+
+		function ws(path) {
+			var loc = window.location, new_uri;
+			if (loc.protocol === "https:") {
+				new_uri = "wss:";
+			} else {
+				new_uri = "ws:";
+			}
+			new_uri += "//" + loc.host;
+			//new_uri += loc.pathname + "/to/ws";
+			new_uri += path;
+			return new_uri;
+		}
+		;
+
+		var websocket = null;
+		var closed = false;
+
+		function send(data) {
+			if (null != websocket && !closed) {
+				var s = JSON.stringify(data);
+				websocket.send(s);
+			}
+		}
+
+		function connect(force) {
+			if (null === websocket) {
+				closed = false;
+				connect0(force);
+			}
+		}
+		;
+		function connect0(force) {
+			var tmp = new WebSocket(ws("/wrepl"));
+			tmp.onopen = function(event) {
+				if (websocket !== null) {
+					tmp.close();
+				} else {
+					websocket = tmp;
+					send({
+						"cmd" : "connect",
+						"force" : force
+					});
+				}
+			};
+			tmp.onclose = function(event) {
+				if (websocket == tmp) {
+					websocket = null;
+					if (!closed) {
+						closed = true;
+						disconnected("disconnected", false);
+					}
+
+				}
+			};
+			tmp.onmessage = function(event) {
+				if (websocket == tmp) {
+					onMessage(event);
+				}
+			};
+			tmp.onerror = function(event) {
+				if (websocket == tmp) {
+					websocket = null;
+					if (!closed) {
+						closed = true;
+						disconnected("disconnected", false);
+					}
+				}
+			};
+		}
+		;
+
+		connect(false);
+
+		function issue_completion(prefix) {
+			send({
+				'cmd' : "completion",
+				'prefix' : prefix
+			});
+		}
+		;
+
+		function onMessage(event) {
+			var j = JSON.parse(event.data);
+			if (j.cmd == "user-input") {
+				controller.report("> " + j.msg, "jquery-console-prompt-box");
+			} else if (j.cmd == "repl-output") {
+				controller.report(j.msg, "jquery-console-message-value");
+			} else if (j.cmd == "completion") {
+				if (1 == j.completion.length) {
+					var new_prefix = j.prefix.substring(0, j.cur_cursor);
+					controller.showCompletion(new_prefix, j.completion);
+				} else if (1 < j.completion.length) {
+					var new_prefix = j.prefix.substring(0, j.cur_cursor);
+					//+j.completion[0].substring(0, j.cur_cursor - j.prev_cursor);
+					new_prefix = new_prefix + find_common_prefix(j.completion);
+					controller.showCompletion(new_prefix, j.completion);
+				}
+
+			} else if (j.cmd == "connected") {
+				connected();
+			} else if (j.cmd == "unconnected"
+					&& j.cause == "connected_by_others") {
+				closed = true;
+				disconnected("server is connected by others", true);
+
+			} else if (j.cmd == "kicked") {
+				closed = true;
+				disconnected("kicked off", true);
+			} else if (j.cmd == "internal-server-error") {
+				closed = true;
+				disconnected("internal server error", false);
+			}
+		}
+
+		var container = $('<div class="console">');
+		$('body').append(container);
+		var controller = container.console({
+			welcomeMessage : "Welcom to Scala-Web-REPL",
+			promptLabel : 'wrepl> ',
+			commandValidate : function(line) {
+				if (line == "")
+					return false;
+				else
+					return true;
+			},
+			commandHandle : function(line, report) {
+				if (line == ":clear") {
+					$(".jquery-console-message").remove();
+					$(".jquery-console-prompt-box").remove();
+				} else {
+					send({
+						'cmd' : "user-input",
+						'msg' : line
+					});
+				}
+				return true;
+			},
+			autofocus : true,
+			animateScroll : true,
+			promptHistory : true,
+			cols : 100,
+			animateScroll : true,
+			completeIssuer : function(prefix) {
+				return issue_completion(prefix);
+			}
+		});
+	};
+	$(document).ready(work);
+</script>
+<style type="text/css" media="screen">
+div.console {
+	font-size: 14px
+}
+
+a, a:visited {
+	color: blue;
+	text-decoration: none;
+}
+
+div.console div.jquery-console-inner {
+	width: 900px;
+	height: 600px;
+	background: #333;
+	padding: 0.5em;
+	overflow: auto
+}
+
+div.console div.jquery-console-prompt-box {
+	color: #fff;
+	font-family: monospace;
+}
+
+div.console div.jquery-console-focus span.jquery-console-cursor {
+	background: #fefefe;
+	color: #333;
+	font-weight: bold
+}
+
+div.console div.jquery-console-message-error {
+	color: #ef0505;
+	font-family: sans-serif;
+	font-weight: bold;
+	padding: 0.1em;
+}
+
+div.console div.jquery-console-message-value {
+	color: #1ad027;
+	font-family: monospace;
+	padding: 0.1em;
+}
+
+div.console div.jquery-console-message-type {
+	color: #52666f;
+	font-family: monospace;
+	padding: 0.1em;
+}
+
+div.console div.jquery-console-welcome {
+	color: white;
+	font-weight: bold;
+}
+
+div.console span.jquery-console-prompt-label {
+	font-weight: bold
+}
+</style>
+</head>
+<body>
+	<noscript>
+		<p>
+			<strong>javascript should be enabled for Scala-Web-REPL.</strong>
+		</p>
+	</noscript>
+	<h1 style="margin-bottom: 3px;">Scala Web REPL</h1>
+	<div style="margin-bottom: 3px; font-weight: bold; margin-bottom: 3px;">
+		<div id="info" style="display: inline; color: green;">initializing...</div>
+		<a href="#" id="disconnect"
+			style="display: none; color: white; background: blue; padding: 3px;">disconnect</a>
+		<a href="#" id="connect"
+			style="display: none; color: white; background: blue; padding: 3px;">reconnect</a>
+		<a href="#" id="connect_forcely"
+			style="display: none; color: white; background: red; padding: 3px;">connect
+			forcely</a>
+	</div>
+	<div style="height: 3px;"></div>
+</body>
+</html>
