@@ -68,5 +68,7 @@ build Scala-Web-REPL
 
 * How to forbid `'System.exit(-1)'`, or more sophisticated restrictions?
 
+* Will some jvm options make Scala-Web-REPL sad?
+
 ## Enjoy It
 Any feedback is expected.
