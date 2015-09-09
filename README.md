@@ -21,6 +21,9 @@ build Scala-Web-REPL
 * cd ./scala-web-repl
 * sbt package
 
+## How to Use It?
+After started, browse http://${host}:${port}/asset/wrepl.html
+
 ## Code Example
 
 	package woshilaiceshide.wrepl
