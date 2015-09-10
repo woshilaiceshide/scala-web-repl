@@ -125,16 +125,12 @@
 		;
 		function connect0(force) {
 			var tmp = new WebSocket(ws("/wrepl"));
+			websocket = tmp;
 			tmp.onopen = function(event) {
-				if (websocket !== null) {
-					tmp.close();
-				} else {
-					websocket = tmp;
-					send({
-						"cmd" : "connect",
-						"force" : force
-					});
-				}
+				send({
+					"cmd" : "connect",
+					"force" : force
+				});
 			};
 			tmp.onclose = function(event) {
 				if (websocket == tmp) {
