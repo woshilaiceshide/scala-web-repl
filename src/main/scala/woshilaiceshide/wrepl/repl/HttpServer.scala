@@ -87,11 +87,11 @@ class HttpServer(interface: String, port: Int, born: Bridge.TaskRunner => Bridge
           val entity = HttpEntity(ct, fromResource("/asset/jquery-console/jquery.console.js"))
           new HttpResponse(200, entity)
         }
-      case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-2.1.1.min.js"), _, _, _) =>
+      case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-2.1.4.min.js"), _, _, _) =>
         channel.respond {
           import spray.http._
           val ct = ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
-          val entity = HttpEntity(ct, fromResource("/asset/jquery-2.1.1.min.js"))
+          val entity = HttpEntity(ct, fromResource("/asset/jquery-2.1.4.min.js"))
           new HttpResponse(200, entity)
         }
       case HttpRequest(HttpMethods.GET, Uri.Path("/asset/json2.js"), _, _, _) =>
@@ -111,11 +111,11 @@ class HttpServer(interface: String, port: Int, born: Bridge.TaskRunner => Bridge
       case x @ HttpRequest(HttpMethods.GET, Uri.Path("/wrepl"), _, _, _) =>
         channel.toWebSocketChannelHandler(x, Nil, 1024, build_default_wrepl_websocket_handler)
       case _: HttpRequest => {
-        channel.respond { new HttpResponse(400) }
+        channel.respond { new HttpResponse(404) }
       }
       case _ => {
         //I DOES NOT support chunked request.
-        null
+        channel.respond { new HttpResponse(404) }
       }
     }
   }
