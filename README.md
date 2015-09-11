@@ -24,7 +24,7 @@ build Scala-Web-REPL
 ## How to Use It?
 After started, browse http://${host}:${port}/asset/wrepl.html
 
-Make sure your browser supports javascript and WebSocket(v13).
+Make sure that your browser supports javascript and WebSocket(v13).
 
 ## Code Example
 
