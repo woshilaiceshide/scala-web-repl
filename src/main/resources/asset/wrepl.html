@@ -7,7 +7,7 @@
 <script type="text/javascript" src="/asset/jquery-2.1.4.min.js"></script>
 <script type="text/javascript" src="/asset/jquery.console.js"></script>
 <script type="text/javascript">
-	var work = function() {
+	var fill_with_terminal = function() {
 
 		function find_common_prefix(strings) {
 			if (0 == strings.length)
@@ -54,6 +54,7 @@
 		function connected() {
 			info("connected");
 			$("#disconnect").show();
+			controller.focus();
 		}
 		;
 		function disconnected(msg, reconnect_forcely) {
@@ -65,7 +66,6 @@
 			} else {
 				$("#connect").show()
 			}
-
 		}
 		;
 
@@ -92,7 +92,7 @@
 			return false;
 		});
 
-		function ws(path) {
+		function ws_address(path) {
 			var loc = window.location, new_uri;
 			if (loc.protocol === "https:") {
 				new_uri = "wss:";
@@ -124,7 +124,7 @@
 		}
 		;
 		function connect0(force) {
-			var tmp = new WebSocket(ws("/wrepl"));
+			var tmp = new WebSocket(ws_address("/wrepl"));
 			websocket = tmp;
 			tmp.onopen = function(event) {
 				send({
@@ -180,9 +180,8 @@
 					var new_prefix = j.prefix.substring(0, j.cur_cursor);
 					controller.showCompletion(new_prefix, j.completion);
 				} else if (1 < j.completion.length) {
-					var new_prefix = j.prefix.substring(0, j.cur_cursor);
-					//+j.completion[0].substring(0, j.cur_cursor - j.prev_cursor);
-					new_prefix = new_prefix + find_common_prefix(j.completion);
+					var new_prefix = j.prefix.substring(0, j.cur_cursor)
+							+ find_common_prefix(j.completion);
 					controller.showCompletion(new_prefix, j.completion);
 				}
 
@@ -203,7 +202,7 @@
 		}
 
 		var container = $('<div class="console">');
-		$('body').append(container);
+		$('#main').append(container);
 		var controller = container.console({
 			welcomeMessage : "Welcom to Scala-Web-REPL",
 			promptLabel : 'wrepl> ',
@@ -234,8 +233,15 @@
 				return issue_completion(prefix);
 			}
 		});
+
+		$("#clear_screen").click(function() {
+			$(".jquery-console-message").remove();
+			$(".jquery-console-prompt-box").remove();
+			controller.report(" ");
+			controller.focus();
+		});
 	};
-	$(document).ready(work);
+	$(document).ready(fill_with_terminal);
 </script>
 <style type="text/css" media="screen">
 div.console {
@@ -248,7 +254,6 @@ a, a:visited {
 }
 
 div.console div.jquery-console-inner {
-	width: 900px;
 	height: 600px;
 	background: #333;
 	padding: 0.5em;
@@ -301,17 +306,24 @@ div.console span.jquery-console-prompt-label {
 			<strong>javascript should be enabled for Scala-Web-REPL.</strong>
 		</p>
 	</noscript>
-	<h1 style="margin-bottom: 3px;">Scala Web REPL</h1>
-	<div style="margin-bottom: 3px; font-weight: bold; margin-bottom: 3px;">
-		<div id="info" style="display: inline; color: green;">initializing...</div>
-		<a href="#" id="disconnect"
-			style="display: none; color: white; background: blue; padding: 3px;">disconnect</a>
-		<a href="#" id="connect"
-			style="display: none; color: white; background: blue; padding: 3px;">reconnect</a>
-		<a href="#" id="connect_forcely"
-			style="display: none; color: white; background: red; padding: 3px;">connect
-			forcely</a>
+	<div id="main" style="width: 900px;">
+		<div style="width: 100%;">
+			<div
+				style="display: inline; height: 33px; font-weight: bold; font-size: 32px;">Scala
+				Web REPL</div>
+			<div style="display: inline; float: right; margin-top: 15px;">
+				<div id="info"
+					style="display: inline; color: green; padding-left: 2px; padding-right: 2px;">initializing...</div>
+				<a href="#" id="disconnect"
+					style="display: none; color: white; background: blue; padding-left: 2px; padding-right: 2px;">disconnect</a>
+				<a href="#" id="connect"
+					style="display: none; color: white; background: blue; padding-left: 2px; padding-right: 2px;">reconnect</a>
+				<a href="#" id="connect_forcely"
+					style="display: none; color: white; background: red; padding-left: 2px; padding-right: 2px;">connect-forcely</a>
+				<a href="#" id="clear_screen"
+					style="color: white; background: green; padding-left: 2px; padding-right: 2px;">clear-screen</a>
+			</div>
+		</div>
 	</div>
-	<div style="height: 3px;"></div>
 </body>
 </html>
