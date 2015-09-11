@@ -237,10 +237,7 @@
 		});
 
 		$("#clear_screen").click(function() {
-			$(".jquery-console-message").remove();
-			$(".jquery-console-prompt-box").remove();
-			controller.report(" ");
-			controller.focus();
+			controller.clearScreen();
 		});
 	};
 	$(document).ready(fill_with_terminal);
