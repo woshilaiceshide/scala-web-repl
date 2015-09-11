@@ -30,7 +30,7 @@ Note that Scala-Web-REPL can not run in the same jvm as sbt. It should be forked
 To run it in other application, add Scala-Web-REPL as a dependency, then follow the example codes below.
 
 ## How to Manipulate It?
-After started, browse http://${host}:${port}/asset/wrepl.html
+After started, browse http://${host}:${port}/asset/wrepl.html . Type scala expressions in the terminal, which will be executed in the remote jvm.
 
 Make sure that your browser supports javascript and WebSocket(v13).
 
