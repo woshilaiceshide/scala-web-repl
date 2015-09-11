@@ -125,7 +125,7 @@ class HttpServer(interface: String, port: Int, born: Bridge.TaskRunner => Bridge
     }
     case _ => {
       //I DOES NOT support chunked request.
-      channel.respond { new HttpResponse(404) }
+      channel.respond { new HttpResponse(400) }
     }
   }
 
