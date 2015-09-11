@@ -74,9 +74,24 @@ After started, browse http://${host}:${port}/asset/wrepl.html
 * Will some jvm options make Scala-Web-REPL sad?
 
 ## FAQ
-* Q: How to customize the web ui?
+1.
+**How to customize the web ui?**
 
 You can override the `'woshilaiceshide.wrepl.repl.HttpServer'` to provide your own `'/asset/extra.css'` and other necessary codes. 
+
+
+## Similar Projects
+* CRaSH
+
+http://www.crashub.org/
+
+* liverepl
+
+https://github.com/djpowell/liverepl
+
+* scalive
+
+https://github.com/xitrum-framework/scalive
 
 ## Enjoy It
 Any feedback is expected.
