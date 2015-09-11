@@ -67,8 +67,6 @@ After started, browse http://${host}:${port}/asset/wrepl.html
 ## TODO
 * I'll write some utilities to help introspection for applications based on akka, spray and play. Any interested guy is appreciated.
 
-* How to authenticate clients?
-
 * How to forbid `'System.exit(-1)'`, or do more sophisticated restrictions?
 
 * Will some jvm options make Scala-Web-REPL sad?
@@ -77,7 +75,12 @@ After started, browse http://${host}:${port}/asset/wrepl.html
 1.
 **How to customize the web ui?**
 
-You can override the `'woshilaiceshide.wrepl.repl.HttpServer'` to provide your own `'/asset/extra.css'` and other necessary codes. 
+You can override the `'woshilaiceshide.wrepl.repl.HttpServer'` to provide your own `'/asset/extra.css'` and other necessary codes.
+
+2.
+**How to authenticate clients?**
+
+I leave this for you! Override `'woshilaiceshide.wrepl.repl.HttpServer'` to implement the authentication.
 
 
 ## Similar Projects
