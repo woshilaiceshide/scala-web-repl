@@ -21,7 +21,15 @@ build Scala-Web-REPL
 * cd ./scala-web-repl
 * sbt package
 
-## How to Use It?
+3.
+run it directly in sbt, using `'sbt run'`.
+
+Note that Scala-Web-REPL can not run in the same jvm as sbt. It should be forked into another jvm. Write `'fork := true'` in build.sbt or issue `'set fork := true'` in sbt's console.
+
+4.
+To run it in other application, add Scala-Web-REPL as a dependency, then follow the example codes below.
+
+## How to Manipulate It?
 After started, browse http://${host}:${port}/asset/wrepl.html
 
 Make sure that your browser supports javascript and WebSocket(v13).

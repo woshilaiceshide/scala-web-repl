@@ -42,3 +42,5 @@ mappings in Universal ++= (baseDirectory.value / "conf" * "*" get) map (x => x -
 
 mainClass in Compile := Some("woshilaiceshide.wrepl.DefaultBootstrap")
 
+fork := true
+
