@@ -33,7 +33,7 @@ run it in other applications, add Scala-Web-REPL as a dependency, then follow th
 3.
 run it as a java agent as below: 
 
-	java -javaagent:/path/to/scala-web-repl-${version}.jar" -Dwrepl.listen.address=0.0.0.0 -Dwrepl.listen.port=8181 -cp ${classpath} ${main_class}
+	java -javaagent:/path/to/scala-web-repl-${version}.jar" -Dwrepl.listen.address=0.0.0.0 -Dwrepl.listen.port=8484 -cp ${classpath} ${main_class}
 
 Or if you use sbt-native-packager, then add the following into build.sbt: 
 
@@ -41,9 +41,11 @@ Or if you use sbt-native-packager, then add the following into build.sbt:
 	
 	bashScriptExtraDefines += """addJava "-javaagent:${lib_dir}/woshilaiceshide.scala-web-repl-1.0-SNAPSHOT.jar""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.address=0.0.0.0""""
-	bashScriptExtraDefines += """addJava "-Dwrepl.listen.port=8181""""
+	bashScriptExtraDefines += """addJava "-Dwrepl.listen.port=8484""""
 
-Note that if `'wrepl.listen.address'` is not specified, it will be `'0.0.0.0'`, and `'wrepl.listen.port'` defaults to `'8484'`.
+Note: 
+*If `'wrepl.listen.address'` is not specified, it will be `'0.0.0.0'`, and `'wrepl.listen.port'` defaults to `'8484'`.
+*if it used as a java agent, you can not bind parameters to repl, SO, just keep the objects you want to manipulate in the web repl in some `'Scala Objects'` or `'static fields of some Java Objects'`.
 
 ## How to Manipulate It?
 After started, browse http://${host}:${port}/asset/wrepl.html . Type scala expressions in the terminal, which will be executed in the remote jvm.
@@ -54,32 +56,41 @@ Make sure that your browser supports javascript and WebSocket(v13).
 
 	package woshilaiceshide.wrepl
 	
-	import scala.tools.nsc._
-	import scala.tools.nsc.interpreter._
-	
-	import woshilaiceshide.wrepl.util.Utility
-	
-	object Server {
-	  def newServer(interface: String, port: Int) = new Server(interface, port)
+	case class Cat(color: String, age: Int) {
+	  def mewl = s"mewling at ${System.currentTimeMillis()}"
 	}
 	
-	class Server(interface: String, port: Int, parameters: Seq[NamedParam] = Seq(), settings: Settings = Utility.defaultSettings, max_lines_kept_in_output_cache: Int = 32, repl_max_idle_time_in_seconds: Int = 60) {
+	object DefaultBootstrap extends App {
 	
-	  import woshilaiceshide.wrepl.repl._
+	  val whiteCat = Cat("white", 3)
+	  val blackCat = Cat("black", 10)
+	
+	  def who_is_older(a: Cat, b: Cat) = {
+	    if (a.age > b.age) Some(a)
+	    else if (a.age < b.age) Some(b)
+	    else None
+	  }
+	
+	  import scala.tools.nsc.interpreter.NamedParam
 	  import scala.tools.nsc.interpreter.NamedParamClass
 	
-	  val httpServer: HttpServer = new HttpServer(interface, port, taskRunner => {
+	  //val config = com.typesafe.config.ConfigFactory.parseFileAnySyntax(new java.io.File("conf/application.conf"))
+	  val config = com.typesafe.config.ConfigFactory.load()
+	  val max_lines_kept_in_repl_output_cache = config.getInt("max_lines_kept_in_repl_output_cache")
+	  val repl_max_idle_time_in_seconds = config.getInt("repl_max_idle_time_in_seconds")
+	  val interface = config.getString("interface")
+	  val port = config.getInt("port")
 	
-	    val get_http_server: NamedParamClass = NamedParamClass("get_http_server", "() => woshilaiceshide.wrepl.repl.HttpServer", () => httpServer)
+	  val server = new Server(
+	    interface,
+	    port,
+	    Seq(NamedParam("whiteCat", whiteCat),
+	      NamedParam("blackCat", blackCat),
+	      NamedParamClass("who_is_older", "(woshilaiceshide.wrepl.Cat, woshilaiceshide.wrepl.Cat) => Option[woshilaiceshide.wrepl.Cat]", who_is_older _)),
+	    max_lines_kept_in_repl_output_cache = max_lines_kept_in_repl_output_cache,
+	    repl_max_idle_time_in_seconds = repl_max_idle_time_in_seconds)
 	
-	    new Bridge(taskRunner, get_http_server +: parameters, bridge => {
-	      new PipedRepl(settings, bridge.writer)
-	    }, max_lines_kept_in_output_cache, repl_max_idle_time_in_seconds)
-	  })
-	
-	  def start(asynchronously: Boolean = false) { httpServer.start(asynchronously) }
-	  def stop(timeout: Int) { httpServer.stop(timeout) }
-	
+	  server.start()
 	}
 
 
