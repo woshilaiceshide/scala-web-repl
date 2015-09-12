@@ -20,16 +20,18 @@ object DefaultBootstrap extends App {
 
   //val config = com.typesafe.config.ConfigFactory.parseFileAnySyntax(new java.io.File("conf/application.conf"))
   val config = com.typesafe.config.ConfigFactory.load()
-  val max_lines_kept_in_output_cache = config.getInt("max_lines_kept_in_output_cache")
+  val max_lines_kept_in_repl_output_cache = config.getInt("max_lines_kept_in_repl_output_cache")
   val repl_max_idle_time_in_seconds = config.getInt("repl_max_idle_time_in_seconds")
+  val interface = config.getString("interface")
+  val port = config.getInt("port")
 
   val server = new Server(
-    "0.0.0.0",
-    8181,
+    interface,
+    port,
     Seq(NamedParam("whiteCat", whiteCat),
       NamedParam("blackCat", blackCat),
       NamedParamClass("who_is_older", "(woshilaiceshide.wrepl.Cat, woshilaiceshide.wrepl.Cat) => Option[woshilaiceshide.wrepl.Cat]", who_is_older _)),
-    max_lines_kept_in_output_cache = max_lines_kept_in_output_cache,
+    max_lines_kept_in_repl_output_cache = max_lines_kept_in_repl_output_cache,
     repl_max_idle_time_in_seconds = repl_max_idle_time_in_seconds)
 
   server.start()

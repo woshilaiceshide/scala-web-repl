@@ -43,7 +43,7 @@ Or if you use sbt-native-packager, then add the following into build.sbt:
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.address=0.0.0.0""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.port=8181""""
 
-Note that if `'wrepl.listen.address'` is not specified, it will be `'0.0.0.0'`, and `'wrepl.listen.port'` defaults to `'8181'`.
+Note that if `'wrepl.listen.address'` is not specified, it will be `'0.0.0.0'`, and `'wrepl.listen.port'` defaults to `'8484'`.
 
 ## How to Manipulate It?
 After started, browse http://${host}:${port}/asset/wrepl.html . Type scala expressions in the terminal, which will be executed in the remote jvm.
