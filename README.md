@@ -37,7 +37,7 @@ run it as a java agent as below:
 
 Or if you use sbt-native-packager, then add the following into build.sbt: 
 
-	libraryDependencies += "woshilaiceshide" % "scala-web-repl" % "1.0-SNAPSHOT"
+	libraryDependencies += "woshilaiceshide" %% "scala-web-repl" % "1.0-SNAPSHOT"
 	
 	bashScriptExtraDefines += """addJava "-javaagent:${lib_dir}/woshilaiceshide.scala-web-repl-1.0-SNAPSHOT.jar""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.address=0.0.0.0""""
