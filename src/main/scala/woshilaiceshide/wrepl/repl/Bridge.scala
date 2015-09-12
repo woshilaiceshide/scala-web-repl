@@ -58,9 +58,9 @@ object Bridge {
 
 import Bridge._
 
-class Bridge(taskRunner: TaskRunner, val parameters: Seq[NamedParam], born: Bridge => PipedRepl, val max_lines_kept_in_output_cache: Int = 32, val repl_max_idle_time_in_seconds: Int = 60 * 1) {
+class Bridge(taskRunner: TaskRunner, val parameters: Seq[NamedParam], born: Bridge => PipedRepl, val max_lines_kept_in_repl_output_cache: Int = 32, val repl_max_idle_time_in_seconds: Int = 60 * 1) {
 
-  private val actor = new BridgeActor(max_lines_kept_in_output_cache, Bridge.this, born)
+  private val actor = new BridgeActor(max_lines_kept_in_repl_output_cache, Bridge.this, born)
   def !(msg: Any) = {
     taskRunner.post(new Runnable() {
       def run() { safeOp { actor.receive(msg) } }
