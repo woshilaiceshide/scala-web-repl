@@ -26,11 +26,6 @@ object Bridge {
   case class Write(cbuf: Array[Char], off: Int, len: Int)
   case class ClientInput(s: String, channel: WebSocketChannelWrapper)
 
-  trait TaskRunner {
-    def post(runnable: Runnable)
-    def scheduleFuzzily(task: Runnable, delayInSeconds: Int)
-  }
-
   import spray.json._
   implicit class JsonHelper(raw: spray.json.JsValue) {
 
@@ -89,6 +84,10 @@ class Bridge(taskRunner: TaskRunner, val parameters: Seq[NamedParam], born: Brid
     override def flush() {}
 
   }
+
+  taskRunner.registerOnTermination {
+    actor.shutdown()
+  }
 }
 
 private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge => PipedRepl) {
@@ -116,6 +115,18 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
   private var connection_behavior_id = 1024
 
   private val NEW_LINE_BYTES = "\n".getBytes("utf-8")
+
+  protected[wrepl] def shutdown() {
+
+    io_cache.clear()
+    pipe.map { _.close() }
+    pipe = None
+    repl = None
+    completer = Completion.NullCompleter
+
+    connection_behavior_id = -1
+
+  }
 
   val receive: PartialFunction[Any, Unit] = {
 

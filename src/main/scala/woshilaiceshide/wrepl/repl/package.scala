@@ -10,4 +10,10 @@ package object repl {
 
   def safeOp[T](x: => T) = try { x } catch { case _: Throwable => {} }
 
+  trait TaskRunner {
+    def post(runnable: Runnable)
+    def scheduleFuzzily(task: Runnable, delayInSeconds: Int)
+    def registerOnTermination[T](code: => T): Boolean
+  }
+
 }

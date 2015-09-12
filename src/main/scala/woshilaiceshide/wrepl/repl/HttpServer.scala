@@ -14,19 +14,23 @@ import spray.can.HttpRequestProcessor
 import spray.can.HttpChannelWrapper
 import spray.can.HttpChannelHandlerFactory
 
-class HttpServer(interface: String, port: Int, born: Bridge.TaskRunner => Bridge) extends PlainHttpChannelHandler {
+class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) extends PlainHttpChannelHandler {
 
-  private val taskRunner = new Bridge.TaskRunner() {
+  private val taskRunner = new TaskRunner() {
     def post(runnable: Runnable) {
       server.post(runnable)
     }
     def scheduleFuzzily(task: Runnable, delayInSeconds: Int) {
       server.scheduleFuzzily(task, delayInSeconds)
     }
+    def registerOnTermination[T](code: => T): Boolean = {
+      server.registerOnTermination(code)
+    }
   }
-  val bridge = born(taskRunner)
 
   def build_default_wrepl_websocket_handler(): WebSocketChannelWrapper => WebSocketChannelHandler = c => {
+
+    val bridge = born(taskRunner)
 
     new WebSocketChannelHandler() {
 
@@ -73,7 +77,8 @@ class HttpServer(interface: String, port: Int, born: Bridge.TaskRunner => Bridge
       channel.respond {
         import spray.http._
         val ct = ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/wrepl.html"))
+        //val entity = HttpEntity(ct, fromResource("/asset/wrepl.html"))
+        val entity = HttpEntity(ct, HttpData(new java.io.File("""E:\tmp\workspace\scala-web-repl\src\main\resources\asset\wrepl.html""")))
         new HttpResponse(200, entity)
       }
     case HttpRequest(HttpMethods.GET, Uri.Path("/asset/default.css"), _, _, _) =>
