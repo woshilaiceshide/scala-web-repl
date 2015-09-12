@@ -54,41 +54,34 @@ Make sure that your browser supports javascript and WebSocket(v13).
 
 	package woshilaiceshide.wrepl
 	
-	case class Cat(color: String, age: Int) {
-	  def mewl = s"mewling at ${System.currentTimeMillis()}"
+	import scala.tools.nsc._
+	import scala.tools.nsc.interpreter._
+	
+	import woshilaiceshide.wrepl.util.Utility
+	
+	object Server {
+	  def newServer(interface: String, port: Int) = new Server(interface, port)
 	}
 	
-	object DefaultBootstrap extends App {
+	class Server(interface: String, port: Int, parameters: Seq[NamedParam] = Seq(), settings: Settings = Utility.defaultSettings, max_lines_kept_in_output_cache: Int = 32, repl_max_idle_time_in_seconds: Int = 60) {
 	
-	  val whiteCat = Cat("white", 3)
-	  val blackCat = Cat("black", 10)
-	
-	  def who_is_older(a: Cat, b: Cat) = {
-	    if (a.age > b.age) Some(a)
-	    else if (a.age < b.age) Some(b)
-	    else None
-	  }
-	
-	  import scala.tools.nsc.interpreter.NamedParam
+	  import woshilaiceshide.wrepl.repl._
 	  import scala.tools.nsc.interpreter.NamedParamClass
 	
-	  //val config = com.typesafe.config.ConfigFactory.parseFileAnySyntax(new java.io.File("conf/application.conf"))
-	  val config = com.typesafe.config.ConfigFactory.load()
-	  val max_lines_kept_in_output_cache = config.getInt("max_lines_kept_in_output_cache")
-	  val repl_max_idle_time_in_seconds = config.getInt("repl_max_idle_time_in_seconds")
+	  val httpServer: HttpServer = new HttpServer(interface, port, taskRunner => {
 	
-	  val server = new Server(
-	    "0.0.0.0",
-	    8181,
-	    Seq(NamedParam("whiteCat", whiteCat),
-	      NamedParam("blackCat", blackCat),
-	      NamedParamClass("who_is_older", "(woshilaiceshide.wrepl.Cat, woshilaiceshide.wrepl.Cat) => Option[woshilaiceshide.wrepl.Cat]", who_is_older _)),
-	    max_lines_kept_in_output_cache = max_lines_kept_in_output_cache,
-	    repl_max_idle_time_in_seconds = repl_max_idle_time_in_seconds)
+	    val get_http_server: NamedParamClass = NamedParamClass("get_http_server", "() => woshilaiceshide.wrepl.repl.HttpServer", () => httpServer)
 	
-	  server.start()
+	    new Bridge(taskRunner, get_http_server +: parameters, bridge => {
+	      new PipedRepl(settings, bridge.writer)
+	    }, max_lines_kept_in_output_cache, repl_max_idle_time_in_seconds)
+	  })
+	
+	  def start(asynchronously: Boolean = false) { httpServer.start(asynchronously) }
+	  def stop(timeout: Int) { httpServer.stop(timeout) }
+	
 	}
-	
+
 
 ## TODO
 * I'll write some utilities to help introspection for applications based on akka, spray and play. Any interested guy is appreciated.
