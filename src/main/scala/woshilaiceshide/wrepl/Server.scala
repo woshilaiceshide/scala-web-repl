@@ -5,7 +5,11 @@ import scala.tools.nsc.interpreter._
 
 import woshilaiceshide.wrepl.util.Utility
 
-class Server(interface: String, port: Int, parameters: Seq[NamedParam], settings: Settings = Utility.defaultSettings, max_lines_kept_in_output_cache: Int = 32, repl_max_idle_time_in_seconds: Int = 60) {
+object Server {
+  def newServer(interface: String, port: Int) = new Server(interface, port)
+}
+
+class Server(interface: String, port: Int, parameters: Seq[NamedParam] = Seq(), settings: Settings = Utility.defaultSettings, max_lines_kept_in_output_cache: Int = 32, repl_max_idle_time_in_seconds: Int = 60) {
 
   import woshilaiceshide.wrepl.repl._
   import scala.tools.nsc.interpreter.NamedParamClass

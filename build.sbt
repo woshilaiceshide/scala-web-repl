@@ -44,3 +44,7 @@ mainClass in Compile := Some("woshilaiceshide.wrepl.DefaultBootstrap")
 
 fork := true
 
+packageOptions in (Compile, packageBin) +=  {
+  Package.ManifestAttributes( "Premain-Class" -> "woshilaiceshide.wrepl.Agent" )
+}
+
