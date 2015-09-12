@@ -77,8 +77,7 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) exten
       channel.respond {
         import spray.http._
         val ct = ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`)
-        //val entity = HttpEntity(ct, fromResource("/asset/wrepl.html"))
-        val entity = HttpEntity(ct, HttpData(new java.io.File("""E:\tmp\workspace\scala-web-repl\src\main\resources\asset\wrepl.html""")))
+        val entity = HttpEntity(ct, fromResource("/asset/wrepl.html"))
         new HttpResponse(200, entity)
       }
     case HttpRequest(HttpMethods.GET, Uri.Path("/asset/default.css"), _, _, _) =>
