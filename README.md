@@ -28,12 +28,12 @@ run it directly in sbt, using `'sbt run'`.
 Note that Scala-Web-REPL can not run in the same jvm as sbt. It should be forked into another jvm. Write `'fork := true'` in build.sbt or issue `'set fork := true'` in sbt's console.
 
 2.
-run it in other applications, add Scala-Web-REPL as a dependency, then follow the example codes below.
+run it in other applications, add Scala-Web-REPL as a dependency, then follow the example codes in https://github.com/woshilaiceshide/scala-web-repl#code-example .
 
 3.
 run it as a java agent as below: 
 
-	java -javaagent:/path/to/scala-web-repl-${version}.jar" -Dwrepl.listen.address=0.0.0.0 -Dwrepl.listen.address=8181 -cp ${classpath} ${main_class}
+	java -javaagent:/path/to/scala-web-repl-${version}.jar" -Dwrepl.listen.address=0.0.0.0 -Dwrepl.listen.port=8181 -cp ${classpath} ${main_class}
 
 Or if you use sbt-native-packager, then add the following into build.sbt: 
 
@@ -41,9 +41,9 @@ Or if you use sbt-native-packager, then add the following into build.sbt:
 	
 	bashScriptExtraDefines += """addJava "-javaagent:${lib_dir}/woshilaiceshide.scala-web-repl-1.0-SNAPSHOT.jar""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.address=0.0.0.0""""
-	bashScriptExtraDefines += """addJava "-Dwrepl.listen.address=8181""""
+	bashScriptExtraDefines += """addJava "-Dwrepl.listen.port=8181""""
 
-Note that if `'wrepl.listen.address'` is not specified, it will be `'0.0.0.0'`, and `'wrepl.listen.address'` defaults to `'8181'`.
+Note that if `'wrepl.listen.address'` is not specified, it will be `'0.0.0.0'`, and `'wrepl.listen.port'` defaults to `'8181'`.
 
 ## How to Manipulate It?
 After started, browse http://${host}:${port}/asset/wrepl.html . Type scala expressions in the terminal, which will be executed in the remote jvm.

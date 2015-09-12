@@ -17,7 +17,7 @@ public class Agent {
 		}
 	}
 
-	public static String AGENT_LISTEN_PORT = "wrepl.listen.address";
+	public static String AGENT_LISTEN_PORT = "wrepl.listen.port";
 	public static int DEFAULT_AGENT_LISTEN_PORT = 8181;
 
 	public static int getAgentListenPort() {
