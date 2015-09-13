@@ -1,3 +1,11 @@
-src/main/resources/asset/jquery-console/* linguist-vendored=false
-src/main/resources/asset/jquery-2.1.4.min.js linguist-vendored=false
-src/main/resources/asset/json2.js linguist-vendored=false
+# Set default behaviour, in case users don't have core.autocrlf set.
+* text=auto
+
+# Explicitly declare text files we want to always be normalized and converted 
+# to native line endings on checkout.
+*.scala text
+*.java text
+
+/src/main/resources/asset/jquery-console/* linguist-vendored=false
+/src/main/resources/asset/jquery-2.1.4.min.js linguist-vendored=false
+/src/main/resources/asset/json2.js linguist-vendored=false
