@@ -105,19 +105,19 @@ Make sure that your browser supports javascript and WebSocket(v13).
 ## Builtin Parameters
 Paramters are those object imported into scala's repl, and you can use it in your interaction.
 
-Besides your own imported paramters, Scala-Web-REPL import 4 named parameters in repl's session automatically: 
+Besides your own imported paramters, Scala-Web-REPL import 4 other parameters automatically: 
 
 1.
 **runtime_mxbean**, which is of type `'java.lang.management.RuntimeMXBean'`, and it will provides some simple system inforamtion.
 
 2.
-**println_to_wrepl"", which is of type `'Any => Unit'`, and it can instruct your codes to print on Scala-Web-REPL.
+**println_to_wrepl**, which is of type `'Any => Unit'`, and it can instruct your codes to print on Scala-Web-REPL.
 
 3.
 **get_http_server**, which is of type `'woshilaiceshide.wrepl.repl.HttpServer'`, and it is the server that listen for your connection. I import this parameter just for no reason, and it will be removed in some future's version.
 
 4.
-**clear_repl_io_cache**, which is of type `'() => Unit'`, and it can clear Scala-Web-REPL's io cache. Scala-Web-REPL will stay for one minute(configurable) after the user disconnected, and the user's input and repl's output are also cached, so your previous work will be there for one minute(maybe longer if you configured). After you reconnected, the previous I/O will re-print on your screen. Use `'clear_repl_io_cache'` to clear this cache. 
+**clear_repl_io_cache**, which is of type `'() => Unit'`, and it can clear Scala-Web-REPL's io cache. Scala-Web-REPL will stay for one minute(configurable) after the user disconnected, and the user's input and repl's output are also cached, so your previous work will be there for one minute(maybe longer if you configured). If you reconnected, the previous I/O will re-print on your screen. Use `'clear_repl_io_cache'` to clear this cache. 
 
 
 ## Utilities for Akka & Hot Code Modification Example
@@ -199,6 +199,11 @@ I leave this for you! Override `'woshilaiceshide.wrepl.repl.HttpServer'` to impl
 **What scala versions does it support?
 
 Only scala-2.11.7 is tested. May be scala-2.11.x is OK, but I give no promise.
+
+4.
+**How to make the internal scala interpreter stopped right now, without waiting for one minute?
+
+Just type the power command `':quit'` in the repl, then ENTER.
 
 ## Similar Projects
 1.
