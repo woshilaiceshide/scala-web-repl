@@ -11,6 +11,7 @@ object AkkaHouse {
     }
   }
 
+  //Utility.RestorableActor makes it posssible that you can modify Printer's behavior and read its internal status. 
   class Printer extends RawPrinter with Utility.RestorableActor
 
   val config = com.typesafe.config.ConfigFactory.load()
