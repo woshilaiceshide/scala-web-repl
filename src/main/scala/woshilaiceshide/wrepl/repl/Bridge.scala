@@ -58,7 +58,7 @@ object Bridge {
 
 import Bridge._
 
-class Bridge(taskRunner: TaskRunner, val parameters: Seq[NamedParam], born: Bridge => PipedRepl, val max_lines_kept_in_repl_output_cache: Int = 32, val repl_max_idle_time_in_seconds: Int = 60 * 1) {
+class Bridge(taskRunner: TaskRunner, parameters_to_bind: Seq[NamedParam], born: Bridge => PipedRepl, val max_lines_kept_in_repl_output_cache: Int = 32, val repl_max_idle_time_in_seconds: Int = 60 * 1) {
 
   private val actor = new BridgeActor(max_lines_kept_in_repl_output_cache, Bridge.this, born)
   def !(msg: Any) = {
@@ -88,6 +88,11 @@ class Bridge(taskRunner: TaskRunner, val parameters: Seq[NamedParam], born: Brid
   taskRunner.registerOnTermination {
     actor.shutdown()
   }
+
+  import scala.tools.nsc.interpreter.NamedParamClass
+  val println_to_wrepl: NamedParamClass = NamedParamClass("println_to_wrepl", "Any => Unit", (x: Any) => writer.write(x.toString))
+  val runtime_mxbean: NamedParamClass = NamedParamClass("runtime_mxbean", "java.lang.management.RuntimeMXBean", java.lang.management.ManagementFactory.getRuntimeMXBean())
+  val parameters = runtime_mxbean +: println_to_wrepl +: parameters_to_bind
 }
 
 private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge => PipedRepl) {
