@@ -4,6 +4,24 @@ name := "scala-web-repl"
 
 version := "1.0-SNAPSHOT"
 
+description := "Some Small Servers written in Scala, including a nio server and a small httpd, which also supports websocket(v13 only)."
+
+licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
+
+publishMavenStyle := true
+
+enablePlugins(BintrayPlugin)
+
+pomIncludeRepository  := {_ => false}
+
+bintrayRepository := "maven"
+
+bintrayOrganization := None
+
+bintrayVcsUrl := Some(s"git@github.com:woshilaiceshide/${name.value}.git")
+
+bintrayReleaseOnPublish in ThisBuild := false
+
 compileOrder in Compile := CompileOrder.Mixed
 
 transitiveClassifiers := Seq("sources")
@@ -32,7 +50,7 @@ libraryDependencies += "io.spray" %% "spray-json" % "1.3.2"
 
 libraryDependencies += "com.google.guava" % "guava" % "18.0"
 
-libraryDependencies += "woshilaiceshide" %% "s-server" % "1.0"
+libraryDependencies += "woshilaiceshide" %% "s-server" % "1.1"
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.11.7"
 libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.7"
