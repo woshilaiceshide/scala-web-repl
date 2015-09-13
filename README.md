@@ -6,7 +6,7 @@ Scala-Web-REPL uses a web terminal as the interactive console. Especially, it ca
 * a hot code modification mechanism
 
 ## How does It Work?
-It uses a scala interpreter to execute codes internally. If NO connected clients, this internal interpreter will be closed after 60 seconds(configurable). When you typed in the terminal, the lines will be transmitted to the running application, get compiled, and executed finnaly.  
+It uses a scala interpreter to execute codes internally. If NO connected clients, this internal interpreter will be closed after 60 seconds(configurable). When you typed in the terminal, the lines will be transmitted to the running application, got compiled, and executed finnaly.  
 
 ## Show
 ![image](https://raw.githubusercontent.com/woshilaiceshide/scala-web-repl/master/scala-web-repl.jpg)
@@ -38,7 +38,7 @@ run it in other applications, add Scala-Web-REPL as a dependency, then follow th
 3.
 run it as a java agent as below: 
 
-	java -javaagent:/path/to/scala-web-repl-${version}.jar" -Dwrepl.listen.address=0.0.0.0 -Dwrepl.listen.port=8484 -cp ${classpath} ${main_class}
+	java -javaagent:/path/to/scala-web-repl_2.11-${version}.jar" -Dwrepl.listen.address=0.0.0.0 -Dwrepl.listen.port=8484 -cp ${classpath} ${main_class}
 
 Or if you use sbt-native-packager, then add the following into build.sbt: 
 
@@ -145,7 +145,7 @@ Scala-Web-REPL provides some simple utilities for manipulation on akka's actors 
 	
 	}
 
-After it is launched, then type the following expressions in the connected Scala-Web-REPL line by line except the comments, and watch the screen: 
+After it is launched, type the following expressions in the connected Scala-Web-REPL line by line except the comments, and watch the screen: 
 
 	import akka.actor.Actor
 	import akka.pattern.ask
@@ -195,6 +195,10 @@ You can override the `'woshilaiceshide.wrepl.repl.HttpServer'` to provide your o
 
 I leave this for you! Override `'woshilaiceshide.wrepl.repl.HttpServer'` to implement the authentication.
 
+3.
+**What scala versions does it support?
+
+Only scala-2.11.7 is tested. May be scala-2.11.x is OK, but I give no promise.
 
 ## Similar Projects
 1.
