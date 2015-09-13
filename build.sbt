@@ -38,6 +38,8 @@ libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.11.7"
 libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.7"
 libraryDependencies += "jline" % "jline" % "2.12.1"
 
+scriptClasspath := "${lib_dir}/../conf" +: scriptClasspath.value
+
 mappings in Universal ++= (baseDirectory.value / "conf" * "*" get) map (x => x -> ("conf/" + x.getName))
 
 mainClass in Compile := Some("woshilaiceshide.wrepl.DefaultBootstrap")

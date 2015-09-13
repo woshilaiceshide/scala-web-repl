@@ -19,7 +19,7 @@ object DefaultBootstrap extends App {
   import scala.tools.nsc.interpreter.NamedParamClass
 
   //val config = com.typesafe.config.ConfigFactory.parseFileAnySyntax(new java.io.File("conf/application.conf"))
-  val config = com.typesafe.config.ConfigFactory.load()
+  val config = com.typesafe.config.ConfigFactory.load().getConfig("scala-web-repl")
   val max_lines_kept_in_repl_output_cache = config.getInt("max_lines_kept_in_repl_output_cache")
   val repl_max_idle_time_in_seconds = config.getInt("repl_max_idle_time_in_seconds")
   val interface = config.getString("interface")
