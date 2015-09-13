@@ -1,0 +1,3 @@
+src/main/resources/asset/jquery-console/* linguist-vendored=false
+src/main/resources/asset/jquery-2.1.4.min.js linguist-vendored=false
+src/main/resources/asset/json2.js linguist-vendored=false
