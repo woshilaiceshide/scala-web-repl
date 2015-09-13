@@ -105,7 +105,7 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
   }
 
   private def write_bindings_to_client(channel: WebSocketChannelWrapper, parameters: NamedParam*) = {
-    write_repl_output(channel, s"${bridge.parameters.length + 1} parameter(s) bound")
+    write_repl_output(channel, s"${bridge.parameters.length + 1} imported parameters those can be used in the interaction.")
     bridge.parameters.foreach { p =>
       write_repl_output(channel, Bridge.formatNamedParam(p))
     }
