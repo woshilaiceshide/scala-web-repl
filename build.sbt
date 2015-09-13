@@ -4,7 +4,7 @@ name := "scala-web-repl"
 
 version := "1.0"
 
-description := "Some Small Servers written in Scala, including a nio server and a small httpd, which also supports websocket(v13 only)."
+description := "A scala repl which uses a web terminal as its interactive console, and it can be used as an inspector/cli for running applications, a hot code modification mechanism."
 
 licenses += ("Apache-2.0", url("http://www.apache.org/licenses/LICENSE-2.0"))
 
