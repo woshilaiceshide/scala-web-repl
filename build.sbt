@@ -2,7 +2,7 @@ organization := "woshilaiceshide"
 
 name := "scala-web-repl"
 
-version := "1.0-SNAPSHOT"
+version := "1.0"
 
 description := "Some Small Servers written in Scala, including a nio server and a small httpd, which also supports websocket(v13 only)."
 
