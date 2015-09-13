@@ -17,7 +17,7 @@ After searching a small http server for several days, I planned to write one for
 At the very beginning, s-server is intended for a dedicated server for this project, which helps saving resource and simplifing development. But now it's a general nio socket server and a general http server, and will evolve independently. 
 
 ## How to Build It?
-If you can access my maven repository https://dl.bintray.com/woshilaiceshide/maven/ , please build from source codes as below: 
+If you can NOT access my maven repository https://dl.bintray.com/woshilaiceshide/maven/ , please build from source codes as below: 
 
 1.
 build s-server, which provides `'HTTP'`, from https://github.com/woshilaiceshide/s-server . Maybe you can just `'publishLocal'` for test.
