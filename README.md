@@ -188,6 +188,8 @@ You'll see how you controlled the actor in the running application.
 
 * Will some jvm options make Scala-Web-REPL sad?
 
+* dynamic class load
+
 ## FAQ
 1.
 **How to customize the web ui?**
