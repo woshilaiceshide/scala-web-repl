@@ -184,7 +184,7 @@ You'll see how you controlled the actor in the running application.
 ## TODO
 * I'll write some utilities to help introspection for applications based on akka, spray and play. Any interested guy is appreciated.
 
-* How to forbid `'System.exit(-1)'`, or do more sophisticated restrictions?
+* How to forbid `'System.exit(-1)'`, or do more sophisticated restrictions, even authentication and authorization?
 
 * Will some jvm options make Scala-Web-REPL sad?
 
@@ -206,7 +206,7 @@ I leave this for you! Override `'woshilaiceshide.wrepl.repl.HttpServer'` to impl
 3.
 **What scala versions does it support?**
 
-Only scala-2.11.7 is tested. May be scala-2.11.x is OK, but I give no promise.
+Only scala-2.11.7 is tested. Maybe scala-2.11.x is OK, but I give no promise.
 
 4.
 **How to make the internal scala interpreter stopped right now, without waiting for one minute?**
