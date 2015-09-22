@@ -159,11 +159,11 @@ After it is launched, type the following expressions in the connected Scala-Web-
 	val printer = woshilaiceshide.wrepl.AkkaHouse.printer
 	
 	val new_behavior = new AkkaUtility.ReceiveWrapper {
-	def aroundReceive(receive: Actor.Receive, msg: Any, superAroundReceive: (Actor.Receive, Any) => Unit): Unit = {
-	println(s"""I received a msg: ${msg}, and begin to process...""")
-	superAroundReceive(receive, msg)
-	println(s"""process finished""")
-	}
+		def aroundReceive(receive: Actor.Receive, msg: Any, superAroundReceive: (Actor.Receive, Any) => Unit): Unit = {
+			println(s"""I received a msg: ${msg}, and begin to process...""")
+			superAroundReceive(receive, msg)
+			println(s"""process finished""")
+		}
 	}
 	//make it happen
 	printer ! new_behavior
