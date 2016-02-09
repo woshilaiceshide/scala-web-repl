@@ -32,7 +32,7 @@ object Bridge {
     def str(key: String): Option[String] = raw match {
       case JsObject(fields) => fields(key) match {
         case JsString(v) => Some(v)
-        case _           => None
+        case _ => None
       }
       case _ => None
     }
@@ -40,7 +40,7 @@ object Bridge {
     def bool(key: String): Option[Boolean] = raw match {
       case JsObject(fields) => fields(key) match {
         case JsBoolean(v) => Some(v)
-        case _            => None
+        case _ => None
       }
       case _ => None
     }
@@ -52,7 +52,7 @@ object Bridge {
     js.compactPrint
   }
 
-  def formatNamedParam(p: NamedParam) = s"""${p.name}: ${p.tpe} = ${p.value}"""
+  def formatNamedParam(index: Int, p: NamedParam) = s"""${index}). ${p.name}: ${p.tpe} = ${p.value}"""
 
 }
 
@@ -106,10 +106,12 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
 
   private def write_bindings_to_client(channel: WebSocketChannelWrapper, parameters: NamedParam*) = {
     write_repl_output(channel, s"${bridge.parameters.length + 1} imported parameters those can be used in the interaction.")
-    bridge.parameters.foreach { p =>
-      write_repl_output(channel, Bridge.formatNamedParam(p))
+    val numbered = bridge.parameters zip (1 to bridge.parameters.size)
+
+    numbered.foreach { p =>
+      write_repl_output(channel, Bridge.formatNamedParam(p._2, p._1))
     }
-    write_repl_output(channel, Bridge.formatNamedParam(clear_repl_io_cache))
+    write_repl_output(channel, Bridge.formatNamedParam(bridge.parameters.size + 1, clear_repl_io_cache))
   }
 
   private var channel = Option.empty[WebSocketChannelWrapper]
