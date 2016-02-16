@@ -46,7 +46,7 @@ class PipedRepl(settings: Settings, writer: Writer) {
         "Cleared active phase."
       } else if (name == "") phased.get match {
         case NoPhaseName => "Usage: :phase <expr> (e.g. typer, erasure.next, erasure+3)"
-        case ph          => "Active phase is '%s'.  (To clear, :phase clear)".format(phased.get)
+        case ph => "Active phase is '%s'.  (To clear, :phase clear)".format(phased.get)
       }
       else {
         val what = phased.parse(name)
@@ -120,7 +120,7 @@ class PipedRepl(settings: Settings, writer: Writer) {
 
       try loop1() match {
         case LineResults.EOF => out print Properties.shellInterruptedString
-        case _               =>
+        case _ =>
       }
       catch AbstractOrMissingHandler()
       finally closeInterpreter()
@@ -157,7 +157,7 @@ class PipedRepl(settings: Settings, writer: Writer) {
       in match {
         //just ignore prompt
         case x: InteractReaderGate => { x.readLineWithoutPrompt }
-        case _                     => in readLine prompt
+        case _ => in readLine prompt
       }
     }
 
@@ -181,6 +181,35 @@ class PipedRepl(settings: Settings, writer: Writer) {
           addReplay(line); true
         case _ => true
       }
+    }
+
+    //please see: 
+    //1. scala.tools.nsc.interpreter.ReplGlobal
+    //2. http://stackoverflow.com/questions/4713031/how-to-use-scalatest-to-develop-a-compiler-plugin-in-scala
+    class RevisedILoopInterpreter extends ILoopInterpreter {
+
+      import scala.tools.nsc.plugins.Plugin
+
+      /** Instantiate a compiler.  Overridable. */
+      override def newCompiler(settings: Settings, reporter: reporters.Reporter): ReplGlobal = {
+        settings.outputDirs setSingleOutput replOutput.dir
+        settings.exposeEmptyPackage.value = true
+        new Global(settings, reporter) with ReplGlobal {
+
+          override def toString: String = "<global>"
+
+          override def loadRoughPluginsList: List[Plugin] =
+            new TypeChecker(this) :: super.loadRoughPluginsList
+        }
+      }
+    }
+
+    /** Create a new interpreter. */
+    override def createInterpreter() {
+      if (addedClasspath != "")
+        settings.classpath append addedClasspath
+
+      intp = new RevisedILoopInterpreter
     }
 
   }
