@@ -14,7 +14,7 @@ class TypeChecker(val global: Global) extends Plugin {
 
   private object Component extends PluginComponent {
     val global: TypeChecker.this.global.type = TypeChecker.this.global
-    val runsAfter = List("refchecks")
+    val runsAfter = List("cleanup")
     override val runsRightAfter: Option[String] = Some("refchecks")
     // Using the Scala Compiler 2.8.x the runsAfter should be written as below
     //val runsAfter = List[String]("refchecks");
@@ -25,10 +25,6 @@ class TypeChecker(val global: Global) extends Plugin {
     override val requires = List("typer", "refchecks")
 
     class TypeCheckerPhase(prev: Phase) extends StdPhase(prev) {
-
-      def show(x: Any) {
-        println(x)
-      }
 
       override def name = TypeChecker.this.name
       def apply(unit: CompilationUnit) {
@@ -45,14 +41,13 @@ class TypeChecker(val global: Global) extends Plugin {
           val i = raw.indexOf('$')
           raw.substring(i + 1)
         }
-        println(s"----------${unit}")
+        println(s"----------> ${unit}")
         for (tree <- unit.body) {
           tree match {
             case Select(x, y) => {
-              if (x.isInstanceOf[global.Ident] && x.toString == "t") {
-                show(x)
+              if (x.isInstanceOf[global.Ident]) {
+                //??? check its initOwner? check its path?
               }
-
               println(s"a tree(${clzName(tree)}): ${clzName(x)} -> ${clzName(y)}: ${x} -> ${y}")
             }
             case x => //println(s"a tree(${tree.getClass}): ${tree}")
