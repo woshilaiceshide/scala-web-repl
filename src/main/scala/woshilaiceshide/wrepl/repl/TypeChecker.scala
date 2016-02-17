@@ -47,6 +47,12 @@ class TypeChecker(val global: Global) extends Plugin {
             case Select(x, y) => {
               if (x.isInstanceOf[global.Ident]) {
                 //??? check its initOwner? check its path?
+                //some code examle
+                //1. {class X{def xxx = 3; }; new X}.xxx
+                //2. val x = new Object{def xxx = 3; }; x.xxx
+                //3. { class X { def xxxxxxx() {val x = new Object; x.hashCode.toString.length} }; new X }.xxxxxxx() 
+                //4. def x(){object t{def length = 3}; def y(){ t.length.hashCode; println("abc")}}
+                //5. def x(){val t = "123"; def y(){ t.length.hashCode; println("abc")}}
               }
               println(s"a tree(${clzName(tree)}): ${clzName(x)} -> ${clzName(y)}: ${x} -> ${y}")
             }
