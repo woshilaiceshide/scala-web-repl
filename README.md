@@ -54,7 +54,7 @@ Or if you use sbt-native-packager, then add the following into build.sbt:
 
 Note: 
 * If `'wrepl.listen.address'` is not specified, it will be `'0.0.0.0'`, and `'wrepl.listen.port'` defaults to `'8484'`.
-* If it used as a java agent, you can not bind parameters to repl, SO, just keep the objects you want to manipulate in the web repl in some `'Scala Objects'` or `'static fields of some Java Objects'`.
+* If it used as a java agent, you can not bind parameters to repl, SO, just keep the objects you want to manipulate in the web repl in some `'Scala Objects'` or `'static fields of some Java Classes'`.
 
 ## How to Manipulate It?
 After started, browse http://${host}:${port}/asset/wrepl.html . Type scala expressions in the terminal, which will be executed in the remote jvm.
