@@ -35,6 +35,14 @@ class TypeChecker(val global: Global) extends Plugin {
     //6. class C{def x[T](t: T) = println(t); }; (new C).x[String]("123")
     //7. class C{def x[T](t: T) = println(t); }; (new C).x[java.lang.String]("123")
     //8. def x(){class X(i: Int){}; val obj = new X(123); obj.hashCode()}
+
+    //9. {class X{def xxx: java.util.Date = null; }; new X}.xxx 
+    //10. {class X{def xxx = new String("123"); }; new X}.xxx 
+    //11. {class X{def xxx = 3; }; new X}.xxx 
+    //12. {class X{def xxx: Int = 3; }; new X}.xxx
+    //13. {class X{def xxx = new ==(); }; new X}.xxx
+    //14. {class X{def xxx = (new ==()).hashCode; }; new X}.xxx
+
     class TypeCheckerPhase(prev: Phase) extends StdPhase(prev) {
 
       import scala.reflect.internal.Symbols
@@ -43,21 +51,79 @@ class TypeChecker(val global: Global) extends Plugin {
 
       class Traverse extends global.Traverser {
 
-        private final def extract_qualified_name(tree: Tree, tail: List[String] = Nil): Either[Tree, List[String]] = {
+        //@scala.annotation.tailrec
+        private final def extract_qualified_name_from_type(tpe: Type, tail: List[String] = Nil): List[String] = {
+
+          //see "scala.reflect.internal.Symbols.Symbol.toString"
+
+          val pre = tpe.prefix
+          val sym = tpe.typeSymbol
+
+          var _me: Option[String] = null
+          //def get_me = if (sym.hasMeaninglessName) sym.owner.decodedName else sym.decodedName
+          //the related type will show somewhere else when it has no meaning.   
+          def me = {
+            if (null == _me)
+              _me = if (sym.hasMeaninglessName) None else Some(sym.decodedName)
+            _me
+          }
+
+          if ((NoPrefix == pre || NoType == pre) && NoSymbol == tpe.typeSymbol) {
+            tail
+          } else if (NoPrefix == pre || NoType == pre) {
+            me match {
+              case Some(x) => {
+                if (x == "<root>") tail
+                else x :: tail
+              }
+              case None => Nil
+            }
+          } else {
+            tpe match {
+              case x: UniqueThisType => {
+                me match {
+                  case Some(x) => {
+                    if (x == "<root>") tail
+                    else extract_qualified_name_from_type(pre, x :: tail)
+                  }
+                  case None => Nil
+                }
+              }
+              case x => {
+                me match {
+                  case Some(x) => {
+                    extract_qualified_name_from_type(pre, x :: tail)
+                  }
+                  case None => Nil
+                }
+              }
+            }
+          }
+        }
+        private final def extract_qualified_name_from_tree(tree: Tree, tail: List[String] = Nil): Either[Tree, List[String]] = {
           tree match {
             case Select(qualifier @ Ident(ident), name) => {
               qualifier.symbol match {
                 case null => Right(ident.toString() :: name.toString :: tail)
-                case x: TermSymbol /*Symbol???*/ if x.owner.isInstanceOf[MethodSymbol] => Right(Nil)
+                case x: Symbol /*TermSymbol ???*/ if x.owner.isInstanceOf[MethodSymbol] => Right(Nil)
                 case _ => Right(ident.toString() :: name.toString :: tail)
               }
             }
             case Select(qualifier @ Select(_, _), name) => {
-              extract_qualified_name(qualifier, name.toString :: tail)
+              extract_qualified_name_from_tree(qualifier, name.toString :: tail)
             }
             case Select(qualifier: New, name) => {
               //qualifier is an Ident or a Select
-              Left(qualifier)
+              qualifier.tpt match {
+                case x @ Ident(ident) => {
+                  x.symbol match {
+                    case null => Right(ident.toString() :: name.toString :: tail)
+                    case x: Symbol /*ClassSymbol???*/ if x.owner.isInstanceOf[TermSymbol] => Right(Nil)
+                    case _ => Right(ident.toString() :: name.toString :: tail)
+                  }
+                }
+                case x => Left(x)
+              }
             }
             case Select(qualifier: Super, name) => {
               Left(qualifier)
@@ -71,24 +137,40 @@ class TypeChecker(val global: Global) extends Plugin {
         }
 
         override def traverse(tree: Tree) {
+
+          println(s"a tree(${clzName(tree)}): ${tree}")
+
           tree match {
             case x @ TypeApply(fun, args) => {
-              //TODO may an Ident in args?
-              println(s"a tree(${clzName(tree)}): ${tree}")
+              //TODO may be an Ident in args?
+              //println(s"a tree(${clzName(tree)}): ${tree}")
               super.traverse(x)
             }
             case x: TypeTree if (null != x.original) => {
               //traverse using my code first
-              extract_qualified_name(x.original) match {
+
+              val tpe = x.tpe
+              val args = tpe.typeArgs
+
+              extract_qualified_name_from_tree(x.original) match {
                 case Left(please_traverse) => super.traverse(please_traverse)
                 case Right(qualified_name) => println(s"qualified_name: ${qualified_name.mkString(".")}")
               }
             }
+            case x: TypeTree => {
+              val tpe = x.tpe
+              val args = tpe.typeArgs
+
+              println(s"a type: ${extract_qualified_name_from_type(tpe).mkString(".")}")
+              args.map { arg =>
+                println(s"a type: ${extract_qualified_name_from_type(arg).mkString(".")}")
+              }
+            }
             case x @ Select(qualifier, name) => {
 
-              println(s"a tree(${clzName(x)}): ${clzName(qualifier)} -> ${clzName(name)}: ${qualifier} -> ${name}")
+              //println(s"a tree(${clzName(x)}): ${clzName(qualifier)} -> ${clzName(name)}: ${qualifier} -> ${name}")
 
-              extract_qualified_name(x) match {
+              extract_qualified_name_from_tree(x) match {
                 case Left(please_traverse) => super.traverse(please_traverse)
                 case Right(qualified_name) => println(s"qualified_name: ${qualified_name.mkString(".")}")
               }
@@ -114,7 +196,7 @@ class TypeChecker(val global: Global) extends Plugin {
       def apply(unit: CompilationUnit) {
 
         //println(s"source: ${unit.source}")
-        println(s"body: ${unit.body}")
+        //println(s"body: ${unit.body}")
 
         println(s"----------> (prev: ${prev})${unit}")
         (new Traverse).traverse(unit.body)
