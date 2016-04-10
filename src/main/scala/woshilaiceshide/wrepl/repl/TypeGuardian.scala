@@ -5,24 +5,36 @@ import scala.tools.nsc.Phase
 import scala.tools.nsc.plugins.Plugin
 import scala.tools.nsc.plugins.PluginComponent
 
-class TypeChecker(val global: Global) extends Plugin {
+object TypeGuardian {
+
+  //TODO only support types whose kind is 1
+  sealed trait TypeRule {
+    def should_forbidden(qualified_type_name: String): Boolean
+  }
+  //TODO
+  def parse_type_rule(s: String): Option[TypeRule] = ???
+
+}
+
+import TypeGuardian._
+class TypeGuardian(val global: Global, type_rules: Seq[TypeRule]) extends Plugin {
   import global._
 
-  val name = "typechecker"
-  val description = "type checker"
+  val name = "typeguardian"
+  val description = "type guardian"
   val components = List[PluginComponent](Component)
 
   private object Component extends PluginComponent {
 
-    val global: TypeChecker.this.global.type = TypeChecker.this.global
+    val global: TypeGuardian.this.global.type = TypeGuardian.this.global
 
     val runsAfter = List("refchecks")
     override val runsRightAfter: Option[String] = Some("refchecks")
 
-    val phaseName = TypeChecker.this.name
-    override def description = TypeChecker.this.description
+    val phaseName = TypeGuardian.this.name
+    override def description = TypeGuardian.this.description
 
-    def newPhase(_prev: Phase) = new TypeCheckerPhase(_prev)
+    def newPhase(_prev: Phase) = new TypeGuardianPhase(_prev)
 
     override val requires = List("typer", "refchecks")
 
@@ -43,11 +55,11 @@ class TypeChecker(val global: Global) extends Plugin {
     //13. {class X{def xxx = new ==(); }; new X}.xxx
     //14. {class X{def xxx = (new ==()).hashCode; }; new X}.xxx
 
-    class TypeCheckerPhase(prev: Phase) extends StdPhase(prev) {
+    class TypeGuardianPhase(prev: Phase) extends StdPhase(prev) {
 
       import scala.reflect.internal.Symbols
 
-      override def name = TypeChecker.this.name
+      override def name = TypeGuardian.this.name
 
       class Traverse extends global.Traverser {
 

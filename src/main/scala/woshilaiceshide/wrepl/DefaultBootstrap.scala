@@ -19,16 +19,23 @@ object DefaultBootstrap extends App {
   }
 
   import scala.tools.nsc.interpreter._
+  import woshilaiceshide.wrepl.repl.TypeGuardian
 
   val config = com.typesafe.config.ConfigFactory.load().getConfig("scala-web-repl")
   val max_lines_kept_in_repl_output_cache = config.getInt("max_lines_kept_in_repl_output_cache")
   val repl_max_idle_time_in_seconds = config.getInt("repl_max_idle_time_in_seconds")
   val interface = config.getString("interface")
   val port = config.getInt("port")
+  val type_rules = {
+    import scala.collection.JavaConverters._
+    val parsed = config.getStringList("type_rules").asScala.map { TypeGuardian.parse_type_rule }
+    parsed.filter { _ != None }.map { _.get }
+  }
 
   val server = new Server(
     interface,
     port,
+    type_rules,
     //these named parameters will be imported to repl'session, so you can operate on them directly.
     Seq(NamedParam("white_cat", white_cat),
       NamedParam("black_cat", black_cat),

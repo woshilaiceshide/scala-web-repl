@@ -9,7 +9,7 @@ import java.io._
 
 import woshilaiceshide.wrepl.util.Utility
 
-class PipedRepl(settings: Settings, writer: Writer) {
+class PipedRepl(settings: Settings, writer: Writer, type_rules: Seq[TypeGuardian.TypeRule]) {
 
   val in0: Option[BufferedReader] = None
   val pipedInputStream = new PipedInputStream(128)
@@ -199,7 +199,7 @@ class PipedRepl(settings: Settings, writer: Writer) {
           override def toString: String = "<global>"
 
           override def loadRoughPluginsList: List[Plugin] =
-            new TypeChecker(this) :: super.loadRoughPluginsList
+            new TypeGuardian(this, type_rules) :: super.loadRoughPluginsList
         }
       }
     }

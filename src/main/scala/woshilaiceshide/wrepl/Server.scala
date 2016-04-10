@@ -9,9 +9,10 @@ object Server {
   def newServer(interface: String, port: Int) = new Server(interface, port)
 }
 
-class Server(interface: String, port: Int, parameters: Seq[NamedParam] = Seq(), settings: Settings = Utility.defaultSettings, max_lines_kept_in_repl_output_cache: Int = 32, repl_max_idle_time_in_seconds: Int = 60) {
+import woshilaiceshide.wrepl.repl._
 
-  import woshilaiceshide.wrepl.repl._
+class Server(interface: String, port: Int, type_rules: Seq[woshilaiceshide.wrepl.repl.TypeGuardian.TypeRule] = Seq(), parameters: Seq[NamedParam] = Seq(), settings: Settings = Utility.defaultSettings, max_lines_kept_in_repl_output_cache: Int = 32, repl_max_idle_time_in_seconds: Int = 60) {
+
   import scala.tools.nsc.interpreter.NamedParamClass
 
   val httpServer: HttpServer = new HttpServer(interface, port, taskRunner => {
@@ -19,7 +20,7 @@ class Server(interface: String, port: Int, parameters: Seq[NamedParam] = Seq(), 
     val get_http_server: NamedParamClass = NamedParamClass("get_http_server", "() => woshilaiceshide.wrepl.repl.HttpServer", () => httpServer)
 
     new Bridge(taskRunner, get_http_server +: parameters, bridge => {
-      new PipedRepl(settings, bridge.writer)
+      new PipedRepl(settings, bridge.writer, type_rules)
     }, max_lines_kept_in_repl_output_cache, repl_max_idle_time_in_seconds)
   })
 
