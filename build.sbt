@@ -28,7 +28,7 @@ transitiveClassifiers := Seq("sources")
 
 EclipseKeys.withSource := true
 
-scalaVersion := "2.11.7"
+scalaVersion := "2.11.8"
 
 scalacOptions := Seq("-unchecked", "-deprecation","-optimise", "-encoding", "utf8", "-Yno-adapted-args")
 
@@ -37,8 +37,6 @@ javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7",
 retrieveManaged := false
 
 enablePlugins(JavaAppPackaging)
-
-net.virtualvoid.sbt.graph.Plugin.graphSettings
 
 unmanagedSourceDirectories in Compile <+= baseDirectory( _ / "src" / "java" )
 
@@ -52,8 +50,8 @@ libraryDependencies += "com.google.guava" % "guava" % "18.0"
 
 libraryDependencies += "woshilaiceshide" %% "s-server" % "1.1"
 
-libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.11.7"
-libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.7"
+libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.11.8"
+libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.8"
 
 scriptClasspath := "../conf" +: scriptClasspath.value
 
