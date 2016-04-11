@@ -9,7 +9,7 @@ object TypeGuardian {
 
   //TODO only support types whose kind is 1
   sealed trait TypeRule {
-    def should_forbidden(qualified_type_name: String): Boolean
+    def should_forbidden(qualified_type_name: String): Option[Boolean]
   }
   //TODO
   def parse_type_rule(s: String): Option[TypeRule] = ???
@@ -63,154 +63,155 @@ class TypeGuardian(val global: Global, type_rules: Seq[TypeRule]) extends Plugin
 
       class Traverse extends global.Traverser {
 
-        //@scala.annotation.tailrec
-        private final def extract_qualified_name_from_type(tpe: Type, tail: List[String] = Nil): List[String] = {
+        //derived from https://github.com/dcaoyuan/nbscala/blob/v1.7.0.0/scala.core/src/main/scala/org/netbeans/modules/scala/core/ast/ScalaUtils.scala
+        /** use to test if type is the same: when they have same typeSimpleSig true, otherwise false */
+        private def typeSimpleSig_(tpe: Type, sb: StringBuilder) {
+          if (tpe eq null) return
+          tpe match {
+            case ErrorType =>
+              sb.append("<error>")
+            // internal: error
+            case WildcardType => sb.append("_")
+            // internal: unknown
+            case NoType => sb.append("<notype>")
+            case NoPrefix => sb.append("<noprefix>")
+            case ThisType(sym) =>
+              sb append (sym.fullName)
+            case SingleType(pre, sym) =>
+              sb append (sym.fullName)
+            case ConstantType(value) =>
+            // int(2)
+            case TypeRef(pre, sym, args) =>
+              sb append (sym.fullName)
+              sb append (args map (x => typeSimpleSig_(x, sb)) mkString ("[", ",", "]"))
+            // pre.sym[targs]
+            case RefinedType(parents, defs) =>
+              sb append (parents map (x => typeSimpleSig_(x, sb)) mkString (" extends ", "with ", ""))
+            //case AnnotatedType(annots, tp, selfsym) =>
+            //  typeSimpleSig_(tp, sb)
+            case TypeBounds(lo, hi) =>
+              sb append (">: ")
+              typeSimpleSig_(lo, sb)
+              sb append (" <: ")
+              typeSimpleSig_(hi, sb)
+            // >: lo <: hi
+            case ClassInfoType(parents, defs, clazz) =>
+              sb append (parents map (x => typeSimpleSig_(x, sb)) mkString (" extends ", " with ", ""))
+            case MethodType(paramtypes, result) => // same as RefinedType except as body of class
+              sb append (paramtypes map (x => typeSimpleSig_(x.tpe, sb)) mkString ("(", ",", ")"))
+              sb append (": ")
+              typeSimpleSig_(result, sb)
+            // (paramtypes): result
+            case PolyType(tparams, result) =>
+              sb append (tparams map (x => typeSimpleSig_(x.tpe, sb)) mkString ("[", ",", "]"))
+              sb append (": ")
+              typeSimpleSig_(result, sb)
+            // [tparams]: result where result is a MethodType or ClassInfoType
+            // or
+            // []: T  for a eval-by-name type
+            case ExistentialType(tparams, result) =>
+              sb append ("ExistantialType")
+            // exists[tparams]result
 
-          //see "scala.reflect.internal.Symbols.Symbol.toString"
+            // the last five types are not used after phase `typer'.
 
-          val pre = tpe.prefix
-          val sym = tpe.typeSymbol
-
-          var _me: Option[String] = null
-          //def get_me = if (sym.hasMeaninglessName) sym.owner.decodedName else sym.decodedName
-          //the related type will show somewhere else when it has no meaning.   
-          def me = {
-            if (null == _me)
-              _me = if (sym.hasMeaninglessName) None else Some(sym.decodedName)
-            _me
+            //case OverloadedType(pre, tparams, alts) => "Overlaod"
+            // all alternatives of an overloaded ident
+            case AntiPolyType(pre: Type, targs) =>
+              sb append ("AntiPolyType")
+            case TypeVar(_, _) =>
+              sb append (tpe.safeToString)
+            // a type variable
+            //case DeBruijnIndex(level, index) =>
+            //sb append ("DeBruijnIndex")
+            case _ =>
+              sb append (tpe.safeToString)
           }
+        }
 
-          if ((NoPrefix == pre || NoType == pre) && NoSymbol == tpe.typeSymbol) {
-            tail
-          } else if (NoPrefix == pre || NoType == pre) {
-            me match {
-              case Some(x) => {
-                if (x == "<root>") tail
-                else x :: tail
-              }
-              case None => Nil
-            }
+        private val string_builder_repo = new ThreadLocal[StringBuilder] {
+          override def initialValue() = new StringBuilder
+        }
+
+        private def check_type_sign_0(type_sign: String, type_rules: Seq[TypeRule]): Boolean = {
+          if (0 == type_rules.size) {
+            true
           } else {
-            tpe match {
-              case x: UniqueThisType => {
-                me match {
-                  case Some(x) => {
-                    if (x == "<root>") tail
-                    else extract_qualified_name_from_type(pre, x :: tail)
-                  }
-                  case None => Nil
-                }
-              }
-              case x => {
-                me match {
-                  case Some(x) => {
-                    extract_qualified_name_from_type(pre, x :: tail)
-                  }
-                  case None => Nil
-                }
-              }
+            type_rules.head.should_forbidden(type_sign) match {
+              case None => check_type_sign_0(type_sign, type_rules.tail)
+              case Some(x) => x
             }
           }
         }
-        private final def extract_qualified_name_from_tree(tree: Tree, tail: List[String] = Nil): Either[Tree, List[String]] = {
-          tree match {
-            case Select(qualifier @ Ident(ident), name) => {
-              qualifier.symbol match {
-                case null => Right(ident.toString() :: name.toString :: tail)
-                case x: Symbol /*TermSymbol ???*/ if x.owner.isInstanceOf[MethodSymbol] => Right(Nil)
-                case _ => Right(ident.toString() :: name.toString :: tail)
-              }
-            }
-            case Select(qualifier @ Select(_, _), name) => {
-              extract_qualified_name_from_tree(qualifier, name.toString :: tail)
-            }
-            case Select(qualifier: New, name) => {
-              //qualifier is an Ident or a Select
-              qualifier.tpt match {
-                case x @ Ident(ident) => {
-                  x.symbol match {
-                    case null => Right(ident.toString() :: name.toString :: tail)
-                    case x: Symbol /*ClassSymbol???*/ if x.owner.isInstanceOf[TermSymbol] => Right(Nil)
-                    case _ => Right(ident.toString() :: name.toString :: tail)
-                  }
-                }
-                case x => Left(x)
-              }
-            }
-            case Select(qualifier: Super, name) => {
-              Left(qualifier)
-            }
-            case Select(qualifier: This, name) => {
-              Right(qualifier.qual.toString() :: name.toString :: tail)
-            }
-            case Select(qualifier, name) => Left(qualifier)
-            case _ => Left(tree)
+
+        private def check_type_sign(tree: Tree, type_sign: String): Boolean = {
+          println(s"a type >> ${type_sign}")
+
+          if (type_sign == "" || type_sign.endsWith(".type")) {
+            //typeSimpleSig_(tree.tpe, sb)
+            global.reporter.error(tree.pos, s"an unexpected type(${type_sign}) arised")
           }
+
+          if (type_sign == "<empty>") {
+            //TODO
+          }
+
+          if (check_type_sign_0(type_sign, type_rules)) {
+            false
+          } else {
+            global.reporter.error(tree.pos, s"a forbidden type(${type_sign}) arised")
+            false
+          }
+        }
+
+        private def inspect(tree: Tree, tpe: global.Type): Unit = {
+          tpe match {
+            case ExistentialType(tparams, result) =>
+            case AntiPolyType(pre: Type, targs) =>
+            case SuperType(thistpe, supertpe) =>
+            //omitted, especially for UniqueSuperType
+            //thistpe and supertpe will be watched elsewhere
+            case MethodType(paramtypes, result) =>
+            //omitted, MethodType is always permitted
+            case ConstantType(value) =>
+            //omitted, ConstantType is always permitted
+            case ErrorType | WildcardType | NoType | NoPrefix =>
+            //omitted
+            case TypeRef(pre, sym, args) => {
+              check_type_sign(tree, sym.fullName)
+              args.foreach { arg => inspect(tree, arg) }
+            }
+            case TypeBounds(lo, hi) => {
+              inspect(tree, lo)
+              inspect(tree, hi)
+            }
+            case x => {
+              val sb = string_builder_repo.get()
+              sb.clear()
+              typeSimpleSig_(tpe, sb)
+              check_type_sign(tree, sb.toString)
+
+            }
+
+          }
+
         }
 
         override def traverse(tree: Tree) {
 
-          println(s"a tree(${clzName(tree)}): ${tree}")
-
           tree match {
-            case x @ TypeApply(fun, args) => {
-              //TODO may be an Ident in args?
-              //println(s"a tree(${clzName(tree)}): ${tree}")
-              super.traverse(x)
-            }
-            case x: TypeTree if (null != x.original) => {
-              //traverse using my code first
-
-              val tpe = x.tpe
-              val args = tpe.typeArgs
-
-              extract_qualified_name_from_tree(x.original) match {
-                case Left(please_traverse) => super.traverse(please_traverse)
-                case Right(qualified_name) => println(s"qualified_name: ${qualified_name.mkString(".")}")
-              }
-            }
-            case x: TypeTree => {
-              val tpe = x.tpe
-              val args = tpe.typeArgs
-
-              println(s"a type: ${extract_qualified_name_from_type(tpe).mkString(".")}")
-              args.map { arg =>
-                println(s"a type: ${extract_qualified_name_from_type(arg).mkString(".")}")
-              }
-            }
-            case x @ Select(qualifier, name) => {
-
-              //println(s"a tree(${clzName(x)}): ${clzName(qualifier)} -> ${clzName(name)}: ${qualifier} -> ${name}")
-
-              extract_qualified_name_from_tree(x) match {
-                case Left(please_traverse) => super.traverse(please_traverse)
-                case Right(qualified_name) => println(s"qualified_name: ${qualified_name.mkString(".")}")
-              }
-            }
             case tree @ Apply(Select(rcvr, nme.DIV), List(Literal(Constant(0)))) if rcvr.tpe <:< definitions.IntClass.tpe => {
               global.reporter.error(tree.pos, "definitely division by zero")
             }
-            case x => super.traverse(x)
-          }
-        }
-
-        def clzName(x: Any) = {
-          if (null != x) {
-            val raw = x.getClass.getName
-            val i = raw.indexOf('$')
-            raw.substring(i + 1)
-          } else {
-            "NULL"
+            case x => {
+              inspect(tree, tree.tpe)
+              super.traverse(x)
+            }
           }
         }
       }
 
       def apply(unit: CompilationUnit) {
-
-        //println(s"source: ${unit.source}")
-        //println(s"body: ${unit.body}")
-
-        println(s"----------> (prev: ${prev})${unit}")
         (new Traverse).traverse(unit.body)
       }
     }

@@ -3,15 +3,14 @@ package woshilaiceshide.wrepl
 import scala.tools.nsc._
 import scala.tools.nsc.interpreter._
 
+import woshilaiceshide.wrepl.repl._
 import woshilaiceshide.wrepl.util.Utility
 
 object Server {
   def newServer(interface: String, port: Int) = new Server(interface, port)
 }
 
-import woshilaiceshide.wrepl.repl._
-
-class Server(interface: String, port: Int, type_rules: Seq[woshilaiceshide.wrepl.repl.TypeGuardian.TypeRule] = Seq(), parameters: Seq[NamedParam] = Seq(), settings: Settings = Utility.defaultSettings, max_lines_kept_in_repl_output_cache: Int = 32, repl_max_idle_time_in_seconds: Int = 60) {
+class Server(interface: String, port: Int, type_rules: Seq[TypeGuardian.TypeRule] = Seq(), parameters: Seq[NamedParam] = Seq(), settings: Settings = Utility.defaultSettings, max_lines_kept_in_repl_output_cache: Int = 32, repl_max_idle_time_in_seconds: Int = 60) {
 
   import scala.tools.nsc.interpreter.NamedParamClass
 
