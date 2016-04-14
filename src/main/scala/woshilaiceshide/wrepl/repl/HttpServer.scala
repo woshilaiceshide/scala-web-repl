@@ -45,7 +45,7 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) exten
         import WebSocket13._
         frame match {
           case x: WSText => bridge ! Bridge.ClientInput(x.text, c)
-          case _         => c.close(Some(WebSocket13.CloseCode.CAN_NOT_ACCEPT_THE_TYPE_OF_DATA))
+          case _ => c.close(Some(WebSocket13.CloseCode.CAN_NOT_ACCEPT_THE_TYPE_OF_DATA))
         }
       }
       def fireClosed(code: WebSocket13.CloseCode.Value, reason: String): Unit = {
@@ -80,6 +80,13 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) exten
         val entity = HttpEntity(ct, fromResource("/asset/wrepl.html"))
         new HttpResponse(200, entity)
       }
+    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/login.html"), _, _, _) =>
+      channel.respond {
+        import spray.http._
+        val ct = ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`)
+        val entity = HttpEntity(ct, fromResource("/asset/login.html"))
+        new HttpResponse(200, entity)
+      }
     case HttpRequest(HttpMethods.GET, Uri.Path("/asset/default.css"), _, _, _) =>
       channel.respond {
         import spray.http._
@@ -92,6 +99,27 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) exten
         import spray.http._
         val ct = ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
         val entity = HttpEntity(ct, HttpData.Empty)
+        new HttpResponse(200, entity)
+      }
+    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-ui.min.css"), _, _, _) =>
+      channel.respond {
+        import spray.http._
+        val ct = ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
+        val entity = HttpEntity(ct, fromResource("/asset/jquery-ui.min.css"))
+        new HttpResponse(200, entity)
+      }
+    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-ui.structure.min.css"), _, _, _) =>
+      channel.respond {
+        import spray.http._
+        val ct = ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
+        val entity = HttpEntity(ct, fromResource("/asset/jquery-ui.structure.min.css"))
+        new HttpResponse(200, entity)
+      }
+    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-ui.theme.min.css"), _, _, _) =>
+      channel.respond {
+        import spray.http._
+        val ct = ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
+        val entity = HttpEntity(ct, fromResource("/asset/jquery-ui.theme.min.css"))
         new HttpResponse(200, entity)
       }
     case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery.console.js"), _, _, _) =>
@@ -113,6 +141,13 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) exten
         import spray.http._
         val ct = ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
         val entity = HttpEntity(ct, fromResource("/asset/json2.js"))
+        new HttpResponse(200, entity)
+      }
+    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-ui.min.js"), _, _, _) =>
+      channel.respond {
+        import spray.http._
+        val ct = ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
+        val entity = HttpEntity(ct, fromResource("/asset/jquery-ui.min.js"))
         new HttpResponse(200, entity)
       }
     case HttpRequest(HttpMethods.GET, Uri.Path("/asset/demo.html"), _, _, _) =>
