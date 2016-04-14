@@ -206,11 +206,16 @@ You can override the `'woshilaiceshide.wrepl.repl.HttpServer'` to provide your o
 I leave this for you! Override `'woshilaiceshide.wrepl.repl.HttpServer'` to implement the authentication.
 
 3.
-**What scala versions does it support?**
+**Which scala versions does it support?**
 
 Only scala-2.11.7 is tested. Maybe scala-2.11.x is OK, but I give no promise.
 
 4.
+**Which browsers does it support?**
+
+Only firefox-45, chrome-49 are tested. The web part uses jquery-2.2.3 and some other jquery-based libraries. Maybe some other versons or other browsers are OK, but I give no promise.
+
+5.
 **How to make the internal scala interpreter stopped right now, without waiting for one minute?**
 
 Just type the power command `':quit'` in the repl, then ENTER.

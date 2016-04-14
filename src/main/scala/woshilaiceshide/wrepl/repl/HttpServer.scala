@@ -101,11 +101,11 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) exten
         val entity = HttpEntity(ct, fromResource("/asset/jquery-console/jquery.console.js"))
         new HttpResponse(200, entity)
       }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-2.1.4.min.js"), _, _, _) =>
+    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-2.2.3.min.js"), _, _, _) =>
       channel.respond {
         import spray.http._
         val ct = ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/jquery-2.1.4.min.js"))
+        val entity = HttpEntity(ct, fromResource("/asset/jquery-2.2.3.min.js"))
         new HttpResponse(200, entity)
       }
     case HttpRequest(HttpMethods.GET, Uri.Path("/asset/json2.js"), _, _, _) =>
