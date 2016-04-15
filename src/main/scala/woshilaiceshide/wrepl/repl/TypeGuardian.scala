@@ -156,6 +156,14 @@ class TypeGuardian(val global: Global, type_rules: Seq[TypeRule]) extends Plugin
             //TODO
           }
 
+          if (type_sign.contains("[")) {
+            //TODO
+          }
+
+          if (type_sign.endsWith(".A")) {
+            //TODO
+          }
+
           if (check_type_sign_0(type_sign, type_rules)) {
             false
           } else {
@@ -175,8 +183,13 @@ class TypeGuardian(val global: Global, type_rules: Seq[TypeRule]) extends Plugin
             //omitted, MethodType is always permitted
             case ConstantType(value) =>
             //omitted, ConstantType is always permitted
+            case _: NoArgsTypeRef with AbstractTypeRef =>
+            //A in List[A]
+            //omitted, AbstractNoArgsTypeRef 
             case ErrorType | WildcardType | NoType | NoPrefix =>
             //omitted
+            case NullaryMethodType(r) =>
+              inspect(tree, r)
             case TypeRef(pre, sym, args) => {
               check_type_sign(tree, sym.fullName)
               args.foreach { arg => inspect(tree, arg) }
@@ -184,6 +197,10 @@ class TypeGuardian(val global: Global, type_rules: Seq[TypeRule]) extends Plugin
             case TypeBounds(lo, hi) => {
               inspect(tree, lo)
               inspect(tree, hi)
+            }
+            case PolyType(tparams, result) => {
+              inspect(tree, result)
+              tparams.map { x => inspect(tree, x.tpe) }
             }
             case x => {
               val sb = string_builder_repo.get()
