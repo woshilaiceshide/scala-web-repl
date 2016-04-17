@@ -37,10 +37,10 @@ object TypeGuardian {
   }
 
   def parse_type_rule(s: String): TypeRule = {
-    if (s.startsWith("deny all")) {
+    if (s == "deny all") {
       DenyAll
 
-    } else if (s.startsWith("allow all")) {
+    } else if (s == "allow all") {
       AllowAll
 
     } else if (s.startsWith("deny ")) {
