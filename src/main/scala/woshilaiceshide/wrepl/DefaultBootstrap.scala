@@ -28,8 +28,7 @@ object DefaultBootstrap extends App {
   val port = config.getInt("port")
   val type_rules = {
     import scala.collection.JavaConverters._
-    val parsed = config.getStringList("type_rules").asScala.map { TypeGuardian.parse_type_rule }
-    parsed.filter { _ != None }.map { _.get }
+    config.getStringList("type_rules").asScala.map { TypeGuardian.parse_type_rule }.toSeq
   }
 
   val server = new Server(

@@ -7,12 +7,52 @@ import scala.tools.nsc.plugins.PluginComponent
 
 object TypeGuardian {
 
-  //TODO only support types whose kind is 1
-  sealed trait TypeRule {
-    def should_forbidden(qualified_type_name: String): Option[Boolean]
+  object AuditResult extends scala.Enumeration {
+    val Unknown, Deny, Allow = Value
   }
-  //TODO
-  def parse_type_rule(s: String): Option[TypeRule] = ???
+
+  //only support types whose kind is 1
+  sealed trait TypeRule {
+    def audit(qualified_type_name: String): AuditResult.Value
+  }
+
+  case class InvalidTypeRuleException(s: String) extends Exception(s"${s} is not a valid type rule.")
+
+  final class RegexTypeRule(pattern: java.util.regex.Pattern, result: AuditResult.Value) extends TypeRule {
+
+    def audit(qualified_type_name: String): AuditResult.Value = {
+      if (pattern.matcher(qualified_type_name).matches()) {
+        result
+      } else {
+        AuditResult.Unknown
+      }
+
+    }
+  }
+  final object AllowAll extends TypeRule {
+    def audit(qualified_type_name: String): AuditResult.Value = AuditResult.Allow
+  }
+  final object DenyAll extends TypeRule {
+    def audit(qualified_type_name: String): AuditResult.Value = AuditResult.Deny
+  }
+
+  def parse_type_rule(s: String): TypeRule = {
+    if (s.startsWith("deny all")) {
+      DenyAll
+
+    } else if (s.startsWith("allow all")) {
+      AllowAll
+
+    } else if (s.startsWith("deny ")) {
+      new RegexTypeRule(s.substring("deny ".length()).r.pattern, AuditResult.Deny)
+
+    } else if (s.startsWith("allow ")) {
+      new RegexTypeRule(s.substring("allow ".length()).r.pattern, AuditResult.Allow)
+
+    } else {
+      throw InvalidTypeRuleException(s)
+    }
+  }
 
 }
 
@@ -137,9 +177,9 @@ class TypeGuardian(val global: Global, type_rules: Seq[TypeRule]) extends Plugin
           if (0 == type_rules.size) {
             true
           } else {
-            type_rules.head.should_forbidden(type_sign) match {
-              case None => check_type_sign_0(type_sign, type_rules.tail)
-              case Some(x) => x
+            type_rules.head.audit(type_sign) match {
+              case AuditResult.Unknown => check_type_sign_0(type_sign, type_rules.tail)
+              case x => x == AuditResult.Allow
             }
           }
         }
