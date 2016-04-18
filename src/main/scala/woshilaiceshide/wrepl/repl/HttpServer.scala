@@ -88,7 +88,9 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge) ext
       }
     case x @ HttpRequest(HttpMethods.POST, Uri.Path("/login"), HttpCharsets.`UTF-8`, _, _) => {
       channel.respond {
-        //x.entity.asString(HttpCharsets.`UTF-8`)
+        import spray.json._
+        val json = x.entity.asString(HttpCharsets.`UTF-8`).parseJson
+        
         new HttpResponse(404)
       }
     }
