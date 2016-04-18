@@ -80,6 +80,8 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge) ext
 
   }
 
+  import spray.json._
+  import woshilaiceshide.wrepl.util.Utility._
   private val ASSET_PATH = Uri.Path("/asset/")
   def requestReceived(request: HttpRequestPart, channel: HttpChannelWrapper): HttpRequestProcessor = request match {
     case HttpRequest(HttpMethods.GET, path, _, _, _) if path.path.startsWith(ASSET_PATH) =>
@@ -88,9 +90,15 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge) ext
       }
     case x @ HttpRequest(HttpMethods.POST, Uri.Path("/login"), HttpCharsets.`UTF-8`, _, _) => {
       channel.respond {
-        import spray.json._
         val json = x.entity.asString(HttpCharsets.`UTF-8`).parseJson
-        
+        (json.str("user"), json.str("password")) match {
+          case (Some(user), Some(password)) => {
+
+          }
+          case _ => {
+            new HttpResponse(400)
+          }
+        }
         new HttpResponse(404)
       }
     }

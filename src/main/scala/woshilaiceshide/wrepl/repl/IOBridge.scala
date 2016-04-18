@@ -33,28 +33,6 @@ object IOBridge {
   case class Write(cbuf: Array[Char], off: Int, len: Int)
   case class ClientInput(s: String, channel: WebSocketChannelWrapper)
 
-  //help methods
-  import spray.json._
-  implicit class JsonHelper(raw: spray.json.JsValue) {
-
-    def str(key: String): Option[String] = raw match {
-      case JsObject(fields) => fields(key) match {
-        case JsString(v) => Some(v)
-        case _ => None
-      }
-      case _ => None
-    }
-
-    def bool(key: String): Option[Boolean] = raw match {
-      case JsObject(fields) => fields(key) match {
-        case JsBoolean(v) => Some(v)
-        case _ => None
-      }
-      case _ => None
-    }
-
-  }
-
   def turn2ClientCmdJsString(cmd: String, fields: (String, String)*) = {
     val js = JsObject(("cmd" -> JsString(cmd)) +: fields.map { x => (x._1, JsString(x._2)) }: _*)
     js.compactPrint
@@ -143,6 +121,8 @@ private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, born: Pip
     connection_behavior_id = -1
 
   }
+
+  import woshilaiceshide.wrepl.util.Utility._
 
   val receive: PartialFunction[Any, Unit] = {
 
