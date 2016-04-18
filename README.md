@@ -194,6 +194,8 @@ You'll see how you controlled the actor in the running application.
 
 * Exclusive access to the repl
 
+* Write test cases
+
 ## FAQ
 1.
 **How to customize the web ui?**
