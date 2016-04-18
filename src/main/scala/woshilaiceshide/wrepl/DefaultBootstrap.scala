@@ -26,9 +26,37 @@ object DefaultBootstrap extends App {
   val repl_max_idle_time_in_seconds = config.getInt("repl_max_idle_time_in_seconds")
   val interface = config.getString("interface")
   val port = config.getInt("port")
+
   val type_rules = {
+
+    import com.typesafe.config._
     import scala.collection.JavaConverters._
-    config.getStringList("type_rules").asScala.map { TypeGuardian.parse_type_rule }.toSeq
+
+    val tmp = config.getConfig("type_rules").entrySet().asScala.map { e =>
+      val value = e.getValue
+      if (ConfigValueType.LIST == value.valueType()) {
+        val list: java.util.List[_ <: ConfigValue] = value.asInstanceOf[ConfigList]
+        val raw = list.asScala.map { cv =>
+          if (cv.valueType() != ConfigValueType.STRING) {
+            throw new ConfigException.WrongType(value.origin(),
+              s"`type_rules`.`${e.getKey}`",
+              s"list of ${ConfigValueType.LIST.name()}",
+              s"list of ${value.valueType().name()}")
+          }
+
+          TypeGuardian.parse_type_rule(cv.unwrapped().asInstanceOf[String])
+        }
+        (e.getKey, raw.toList)
+
+      } else {
+        throw new ConfigException.WrongType(value.origin(),
+          s"`type_rules`.`${e.getKey}`",
+          s"list of ${ConfigValueType.LIST.name()}",
+          s"list of ${value.valueType().name()}")
+      }
+    }
+
+    tmp.toMap
   }
 
   val server = new Server(

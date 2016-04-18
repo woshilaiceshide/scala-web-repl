@@ -14,7 +14,7 @@ import spray.can.HttpRequestProcessor
 import spray.can.HttpChannelWrapper
 import spray.can.HttpChannelHandlerFactory
 
-class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) extends PlainHttpChannelHandler {
+class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge) extends PlainHttpChannelHandler {
 
   private val taskRunner = new TaskRunner() {
     def post(runnable: Runnable) {
@@ -44,12 +44,12 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) exten
       def frameReceived(frame: WebSocket13.WSFrame): Unit = {
         import WebSocket13._
         frame match {
-          case x: WSText => bridge ! Bridge.ClientInput(x.text, c)
+          case x: WSText => bridge ! IOBridge.ClientInput(x.text, c)
           case _ => c.close(Some(WebSocket13.CloseCode.CAN_NOT_ACCEPT_THE_TYPE_OF_DATA))
         }
       }
       def fireClosed(code: WebSocket13.CloseCode.Value, reason: String): Unit = {
-        bridge ! Bridge.Disconnect(c)
+        bridge ! IOBridge.Disconnect(c)
       }
     }
 
@@ -157,11 +157,18 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => Bridge) exten
         val entity = HttpEntity(ct, fromResource("/asset/jquery-console/demo.html"))
         new HttpResponse(200, entity)
       }
+    case x @ HttpRequest(HttpMethods.POST, Uri.Path("/login"), HttpCharsets.`UTF-8`, _, _) => {
+      channel.respond {
+        //x.entity.asString(HttpCharsets.`UTF-8`)
+        new HttpResponse(404)
+      }
+    }
     case x @ HttpRequest(HttpMethods.GET, Uri.Path("/wrepl"), _, _, _) =>
       channel.toWebSocketChannelHandler(x, Nil, 1024, build_default_wrepl_websocket_handler())
-    case _: HttpRequest => {
-      channel.respond { new HttpResponse(404) }
-    }
+    case _: HttpRequest =>
+      channel.respond {
+        new HttpResponse(404)
+      }
     case _ => {
       //I DOES NOT support chunked request.
       channel.respond { new HttpResponse(400) }

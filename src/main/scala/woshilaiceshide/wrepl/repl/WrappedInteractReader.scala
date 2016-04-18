@@ -12,7 +12,7 @@ import akka.actor.ActorRef
 import akka.actor.actorRef2Scala
 import java.io.PipedOutputStream
 
-class InteractReaderGate(completer: Completer, reader: java.io.Reader, writer: java.io.Writer) extends InteractiveReader {
+class WrappedInteractReader(completer: Completer, reader: java.io.Reader, writer: java.io.Writer) extends InteractiveReader {
 
   private val in = new BufferedReader(reader)
 

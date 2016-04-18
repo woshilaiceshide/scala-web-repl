@@ -14,18 +14,26 @@ import scala.tools.nsc.interpreter.NamedParamClass
 import scala.tools.nsc.interpreter.Completion
 import scala.tools.nsc.interpreter.NoCompletion
 
-object Bridge {
+import java.io._
 
+object IOBridge {
+
+  trait PipedReplFactory {
+    def apply(reader: Reader, writer: Writer, user: String): PipedRepl
+  }
+
+  //commands that the io bridge actor should respond with
   case class Connect(channel: WebSocketChannelWrapper, force: Boolean)
   case class Disconnect(channel: WebSocketChannelWrapper)
   private[repl] case class CheckDisconnection(connection_behavior_id: Int)
   private[repl] case class ReplDied(repl: PipedRepl)
 
-  case class RegisterPipeAndCompleter(repl: PipedRepl, output: java.io.OutputStream, completer: Completion.ScalaCompleter)
+  case class RegisterPipeAndCompleter(repl: PipedRepl, output: PipedOutputStream, completer: Completion.ScalaCompleter)
 
   case class Write(cbuf: Array[Char], off: Int, len: Int)
   case class ClientInput(s: String, channel: WebSocketChannelWrapper)
 
+  //help methods
   import spray.json._
   implicit class JsonHelper(raw: spray.json.JsValue) {
 
@@ -47,7 +55,7 @@ object Bridge {
 
   }
 
-  def turn2String(cmd: String, fields: (String, String)*) = {
+  def turn2ClientCmdJsString(cmd: String, fields: (String, String)*) = {
     val js = JsObject(("cmd" -> JsString(cmd)) +: fields.map { x => (x._1, JsString(x._2)) }: _*)
     js.compactPrint
   }
@@ -56,11 +64,12 @@ object Bridge {
 
 }
 
-import Bridge._
+import IOBridge._
 
-class Bridge(taskRunner: TaskRunner, parameters_to_bind: Seq[NamedParam], born: Bridge => PipedRepl, val max_lines_kept_in_repl_output_cache: Int = 32, val repl_max_idle_time_in_seconds: Int = 60 * 1) {
+//A bridge that manages the i/o interaction between repl and web terminal. It will create the repl if needed. 
+class IOBridge(taskRunner: TaskRunner, parameters_to_bind: Seq[NamedParam], born: PipedReplFactory, val max_lines_kept_in_repl_output_cache: Int = 32, val repl_max_idle_time_in_seconds: Int = 60 * 1) {
 
-  private val actor = new BridgeActor(max_lines_kept_in_repl_output_cache, Bridge.this, born)
+  private val actor = new IOBridgeActor(max_lines_kept_in_repl_output_cache, IOBridge.this, born)
   def !(msg: Any) = {
     taskRunner.post(new Runnable() {
       def run() { safeOp { actor.receive(msg) } }
@@ -73,12 +82,12 @@ class Bridge(taskRunner: TaskRunner, parameters_to_bind: Seq[NamedParam], born: 
     }, delayInSeconds)
   }
 
-  val writer = new java.io.Writer {
+  val writer = new Writer {
 
     override def write(cbuf: Array[Char], off: Int, len: Int) {
       val copied = Array.fill[Char](len)(0)
       System.arraycopy(cbuf, off, copied, 0, len)
-      Bridge.this ! Bridge.Write(copied, 0, len)
+      IOBridge.this ! Write(copied, 0, len)
     }
     override def close() {}
     override def flush() {}
@@ -95,13 +104,13 @@ class Bridge(taskRunner: TaskRunner, parameters_to_bind: Seq[NamedParam], born: 
   val parameters = runtime_mxbean +: println_to_wrepl +: parameters_to_bind
 }
 
-private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge => PipedRepl) {
+private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, born: PipedReplFactory) {
 
   private val io_cache: EvictingQueue[String] = EvictingQueue.create(maxKept + 1)
   private val clear_repl_io_cache = NamedParamClass("clear_repl_io_cache", "() => Unit", () => { io_cache.clear(); })
 
   private def write_repl_output(channel: WebSocketChannelWrapper, s: String) = {
-    channel.writeString(Bridge.turn2String("repl-output", "msg" -> s))
+    channel.writeString(IOBridge.turn2ClientCmdJsString("repl-output", "msg" -> s))
   }
 
   private def write_bindings_to_client(channel: WebSocketChannelWrapper, parameters: NamedParam*) = {
@@ -109,13 +118,13 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
     val numbered = bridge.parameters zip (1 to bridge.parameters.size)
 
     numbered.foreach { p =>
-      write_repl_output(channel, Bridge.formatNamedParam(p._2, p._1))
+      write_repl_output(channel, IOBridge.formatNamedParam(p._2, p._1))
     }
-    write_repl_output(channel, Bridge.formatNamedParam(bridge.parameters.size + 1, clear_repl_io_cache))
+    write_repl_output(channel, IOBridge.formatNamedParam(bridge.parameters.size + 1, clear_repl_io_cache))
   }
 
   private var channel = Option.empty[WebSocketChannelWrapper]
-  private var pipe = Option.empty[java.io.OutputStream]
+  private var pipe = Option.empty[OutputStream]
   private var repl = Option.empty[PipedRepl]
   private var completer: Completion.ScalaCompleter = Completion.NullCompleter
 
@@ -138,26 +147,32 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
   val receive: PartialFunction[Any, Unit] = {
 
     case Connect(channel, false) if this.channel != None && this.channel != Some(channel) => {
-      channel.writeString(Bridge.turn2String("unconnected", "cause" -> "connected_by_others"))
+      channel.writeString(IOBridge.turn2ClientCmdJsString("unconnected", "cause" -> "connected_by_others"))
       channel.close()
     }
 
     case Connect(channel, force) => {
       this.channel.map { c =>
-        c.writeString(Bridge.turn2String("kicked"))
+        c.writeString(IOBridge.turn2ClientCmdJsString("kicked"))
         c.close()
       }
 
       this.channel = Some(channel)
       connection_behavior_id = connection_behavior_id + 1
       if (repl.isEmpty) {
-        repl = Some(born(bridge))
+
+        val piped_input = new PipedInputStream(128)
+        val piped_output = new PipedOutputStream()
+        piped_output.connect(piped_input)
+        val reader = new InputStreamReader(piped_input)
+
+        repl = Some(born(reader, bridge.writer, "<who>"))
         io_cache.iterator().asScala.foreach { x => channel.writeString(x) }
         repl.map {
           _.loop(true,
             after_initialized = Some(x => {
 
-              bridge ! Bridge.RegisterPipeAndCompleter(x, x.pipedOutputStream, x.repl.in.completion.completer())
+              bridge ! IOBridge.RegisterPipeAndCompleter(x, piped_output, x.repl.in.completion.completer())
 
               //x.out.write("binding parameters")
               bridge.parameters.foreach {
@@ -169,12 +184,12 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
               write_bindings_to_client(channel, (clear_repl_io_cache +: bridge.parameters): _*)
               write_repl_output(channel, "~~~")
               write_repl_output(channel, repl.get.welcome_msg)
-              channel.writeString(Bridge.turn2String("connected"))
+              channel.writeString(IOBridge.turn2ClientCmdJsString("connected"))
 
             }),
             after_stopped = Some(x => {
               x.close()
-              bridge ! Bridge.ReplDied(x)
+              bridge ! IOBridge.ReplDied(x)
             }))
         }
       } else {
@@ -190,7 +205,7 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
           io_cache.iterator().asScala.foreach { x => channel.writeString(x) }
         }
 
-        channel.writeString(Bridge.turn2String("connected"))
+        channel.writeString(IOBridge.turn2ClientCmdJsString("connected"))
       }
     }
 
@@ -203,7 +218,7 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
 
     case ReplDied(repl) if this.repl == Some(repl) => {
       this.channel.map { c =>
-        c.writeString(Bridge.turn2String("internal-server-error"))
+        c.writeString(IOBridge.turn2ClientCmdJsString("internal-server-error"))
         val code = woshilaiceshide.sserver.httpd.WebSocket13.CloseCode.INTERNAL_SERVER_ERROR
         c.close(Some(code))
       }
@@ -227,7 +242,7 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
     case RegisterPipeAndCompleter(repl, output1, completer1) if this.repl == Some(repl) => {
       pipe = Some(output1)
       completer = completer1
-      channel.map { _.writeString(Bridge.turn2String("connected")) }
+      channel.map { _.writeString(IOBridge.turn2ClientCmdJsString("connected")) }
 
     }
 
@@ -244,7 +259,7 @@ private[repl] class BridgeActor(maxKept: Int = 10, bridge: Bridge, born: Bridge 
       input.str("cmd") match {
         case Some("connect") => {
           input.bool("force") map { x =>
-            bridge ! Bridge.Connect(c, x)
+            bridge ! IOBridge.Connect(c, x)
           }
         }
 

@@ -9,15 +9,11 @@ import java.io._
 
 import woshilaiceshide.wrepl.util.Utility
 
-class PipedRepl(settings: Settings, writer: Writer, type_rules: Seq[TypeGuardian.TypeRule]) {
+class PipedRepl(settings: Settings, reader: Reader, writer: Writer, type_rules: Seq[TypeGuardian.TypeRule]) {
 
   val in0: Option[BufferedReader] = None
-  val pipedInputStream = new PipedInputStream(128)
-  val pipedOutputStream = new PipedOutputStream()
-  pipedOutputStream.connect(pipedInputStream)
-  val reader = new InputStreamReader(pipedInputStream)
 
-  val out = new JPrintWriter(writer)
+  private val out = new JPrintWriter(writer)
 
   val repl = new ILoop(in0, out) {
 
@@ -27,7 +23,7 @@ class PipedRepl(settings: Settings, writer: Writer, type_rules: Seq[TypeGuardian
         if (settings.noCompletion) maker(() => NoCompletion)
         else maker(() => new JLineCompletion(intp)) // JLineCompletion is a misnomer -- it's not tied to jline
 
-      mkReader { completer => new InteractReaderGate(completer, reader, out) }
+      mkReader { completer => new WrappedInteractReader(completer, reader, out) }
     }
 
     import scala.reflect.internal.util.ScalaClassLoader.savingContextLoader
@@ -156,7 +152,7 @@ class PipedRepl(settings: Settings, writer: Writer, type_rules: Seq[TypeGuardian
       out.flush()
       in match {
         //just ignore prompt
-        case x: InteractReaderGate => { x.readLineWithoutPrompt }
+        case x: WrappedInteractReader => { x.readLineWithoutPrompt }
         case _ => in readLine prompt
       }
     }

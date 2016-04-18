@@ -175,7 +175,7 @@ class TypeGuardian(val global: Global, type_rules: Seq[TypeRule]) extends Plugin
 
         private def check_type_sign_0(type_sign: String, type_rules: Seq[TypeRule]): Boolean = {
           if (0 == type_rules.size) {
-            true
+            false
           } else {
             type_rules.head.audit(type_sign) match {
               case AuditResult.Unknown => check_type_sign_0(type_sign, type_rules.tail)
