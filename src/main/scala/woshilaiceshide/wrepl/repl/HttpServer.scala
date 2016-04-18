@@ -57,105 +57,34 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge) ext
 
   def channelClosed(channel: HttpChannelWrapper): Unit = {}
 
+  import spray.http._
   private def fromResource(path: String) = {
     val stream = this.getClass.getResourceAsStream(path)
-    val count = stream.available()
-    val bytes = com.google.common.io.ByteStreams.toByteArray(stream)
-    stream.close()
-    bytes
+    if (null != stream) {
+      val count = stream.available()
+      val bytes = com.google.common.io.ByteStreams.toByteArray(stream)
+      stream.close()
+      val ct = if (path.endsWith(".html")) {
+        ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`)
+      } else if (path.endsWith(".css")) {
+        ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
+      } else if (path.endsWith(".js")) {
+        ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
+      } else {
+        ContentTypes.`application/octet-stream`
+      }
+      new HttpResponse(200, HttpEntity(ct, HttpData(bytes)))
+    } else {
+      new HttpResponse(404)
+    }
+
   }
 
+  private val ASSET_PATH = Uri.Path("/asset/")
   def requestReceived(request: HttpRequestPart, channel: HttpChannelWrapper): HttpRequestProcessor = request match {
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/websocket.html"), _, _, _) =>
+    case HttpRequest(HttpMethods.GET, path, _, _, _) if path.path.startsWith(ASSET_PATH) =>
       channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/websocket.html"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/wrepl.html"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/wrepl.html"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/login.html"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/login.html"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/default.css"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/default.css"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/extra.css"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, HttpData.Empty)
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-ui.min.css"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/jquery-ui.min.css"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-ui.structure.min.css"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/jquery-ui.structure.min.css"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-ui.theme.min.css"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`text/css`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/jquery-ui.theme.min.css"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery.console.js"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/jquery-console/jquery.console.js"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-2.2.3.min.js"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/jquery-2.2.3.min.js"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/json2.js"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/json2.js"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/jquery-ui.min.js"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`application/javascript`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/jquery-ui.min.js"))
-        new HttpResponse(200, entity)
-      }
-    case HttpRequest(HttpMethods.GET, Uri.Path("/asset/demo.html"), _, _, _) =>
-      channel.respond {
-        import spray.http._
-        val ct = ContentType(MediaTypes.`text/html`, HttpCharsets.`UTF-8`)
-        val entity = HttpEntity(ct, fromResource("/asset/jquery-console/demo.html"))
-        new HttpResponse(200, entity)
+        fromResource(path.path.toString())
       }
     case x @ HttpRequest(HttpMethods.POST, Uri.Path("/login"), HttpCharsets.`UTF-8`, _, _) => {
       channel.respond {
