@@ -5,14 +5,15 @@
 <meta name="Content-Type" content="text/html; charset=UTF-8">
 <link rel=stylesheet type="text/css" href="/asset/default.css" charset="utf-8">
 <link rel=stylesheet type="text/css" href="/asset/extra.css" charset="utf-8">
-<link rel=stylesheet type="text/css" href="/asset/jquery-ui.min.css" charset="utf-8">
-<link rel=stylesheet type="text/css" href="/asset/jquery-ui.structure.min.css" charset="utf-8">
-<link rel=stylesheet type="text/css" href="/asset/jquery-ui.theme.min.css" charset="utf-8">
+<link rel=stylesheet type="text/css" href="/asset/bootstrap.min.css" charset="utf-8">
+<link rel=stylesheet type="text/css" href="/asset/bootstrap-theme.min.css" charset="utf-8">
 <script type="text/javascript" src="/asset/json2.js"></script>
 <script type="text/javascript" src="/asset/jquery-2.2.3.min.js"></script>
-<script type="text/javascript" src="/asset/jquery-ui.min.js"></script>
+<script type="text/javascript" src="/asset/jquery.md5.js"></script>
 <script type="text/javascript">
-
+function md5(s){
+	return $.md5(s);
+}
 </script>
 <style type="text/css" media="screen">
 
@@ -24,7 +25,18 @@
 			<strong>javascript should be enabled for Scala-Web-REPL.</strong>
 		</p>
 	</noscript>
-	<div id="main" style="width: 900px;">
+	<div id="main" style="width: 377px; margin: 0px auto; margin-top: 60px;">
+
+<label for="login">Welcome to Scala-Web-REPL(2.0-SNAPSHOT)</label>
+<form id="login">
+  <div class="form-group">
+    <input type="text" class="form-control" id="user" placeholder="User">
+  </div>
+  <div class="form-group">
+    <input type="password" class="form-control" id="password" placeholder="Password">
+  </div>
+  <button type="button" class="btn btn-default" id="ok" style="width: 60px">OK</button>
+</form>
 
 	</div>
 </body>

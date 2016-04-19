@@ -40,17 +40,22 @@ run it in other applications, add Scala-Web-REPL as a dependency, then follow th
 3.
 run it as a java agent as below: 
 
-	java -javaagent:/path/to/scala-web-repl_2.11-${version}.jar" -Dwrepl.listen.address=0.0.0.0 -Dwrepl.listen.port=8484 -cp ${classpath} ${main_class}
+	java -javaagent:/path/to/scala-web-repl_2.11-${version}.jar \
+		-Dwrepl.listen.address=0.0.0.0 -Dwrepl.listen.port=8484 \
+		-Dwrepl.authenticate.user=jim  -Dwrepl.authenticate.password=123 \
+		-cp ${classpath} ${main_class}
 
 Or if you use sbt-native-packager, then add the following into build.sbt: 
 
 	resolvers += "Woshilaiceshide Releases" at "http://dl.bintray.com/woshilaiceshide/maven/"
 
-	libraryDependencies += "woshilaiceshide" %% "scala-web-repl" % "1.0" withSources()
+	libraryDependencies += "woshilaiceshide" %% "scala-web-repl" % "2.0" withSources()
 	
 	bashScriptExtraDefines += """addJava "-javaagent:${lib_dir}/woshilaiceshide.scala-web-repl_2.11-1.0.jar""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.address=0.0.0.0""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.port=8484""""
+	bashScriptExtraDefines += """addJava "-Dwrepl.authenticate.user=jim""""
+	bashScriptExtraDefines += """addJava "-Dwrepl.authenticate.password=8484""""
 
 Note: 
 * If `'wrepl.listen.address'` is not specified, it will be `'0.0.0.0'`, and `'wrepl.listen.port'` defaults to `'8484'`.

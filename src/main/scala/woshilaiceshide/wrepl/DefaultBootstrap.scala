@@ -59,10 +59,14 @@ object DefaultBootstrap extends App {
     tmp.toMap
   }
 
-  val server = new Server(
+  val md5_salt = config.getString("md5_salt")
+
+  val server = Server.newServer(
     interface,
     port,
     type_rules,
+    Map(),
+    md5_salt,
     //these named parameters will be imported to repl'session, so you can operate on them directly.
     Seq(NamedParam("white_cat", white_cat),
       NamedParam("black_cat", black_cat),

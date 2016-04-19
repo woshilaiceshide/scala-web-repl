@@ -2,6 +2,16 @@ package woshilaiceshide.wrepl;
 
 public class Agent {
 
+	public static class AgentConfigException extends RuntimeException {
+
+		private static final long serialVersionUID = 207893945872804006L;
+
+		public AgentConfigException(String configName) {
+			super("no proper value for " + configName);
+		}
+
+	}
+
 	private Agent() {
 	}
 
@@ -33,6 +43,28 @@ public class Agent {
 		return port;
 	}
 
+	public static String AGENT_AUTHENTICATE_USER = "wrepl.authenticate.user";
+
+	public static String getAgentAuthenticateUser() {
+		String raw = System.getProperty(AGENT_AUTHENTICATE_USER);
+		if (null == raw) {
+			throw new AgentConfigException(AGENT_AUTHENTICATE_USER);
+		} else {
+			return raw;
+		}
+	}
+
+	public static String AGENT_AUTHENTICATE_PASSWORD = "wrepl.authenticate.password";
+
+	public static String getAgentAuthenticatePassword() {
+		String raw = System.getProperty(AGENT_AUTHENTICATE_PASSWORD);
+		if (null == raw) {
+			throw new AgentConfigException(AGENT_AUTHENTICATE_PASSWORD);
+		} else {
+			return raw;
+		}
+	}
+
 	public static void main(String args[]) {
 		premain("");
 	}
@@ -41,8 +73,10 @@ public class Agent {
 
 		final String address = getAgentListenAddress();
 		final int port = getAgentListenPort();
+		final String user = getAgentAuthenticateUser();
+		final String password = getAgentAuthenticatePassword();
 
-		final Server server = Server.newServer(address, port);
+		final Server server = Server.newSimpleServer(address, port, user, password);
 
 		System.out.println("starting Scala-Web-REPL...");
 		server.start(true);

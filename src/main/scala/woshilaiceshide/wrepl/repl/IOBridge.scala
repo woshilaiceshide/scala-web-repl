@@ -45,9 +45,9 @@ object IOBridge {
 import IOBridge._
 
 //A bridge that manages the i/o interaction between repl and web terminal. It will create the repl if needed. 
-class IOBridge(taskRunner: TaskRunner, parameters_to_bind: Seq[NamedParam], born: PipedReplFactory, val max_lines_kept_in_repl_output_cache: Int = 32, val repl_max_idle_time_in_seconds: Int = 60 * 1) {
+class IOBridge(taskRunner: TaskRunner, parameters_to_bind: Seq[NamedParam], factory: PipedReplFactory, val max_lines_kept_in_repl_output_cache: Int = 32, val repl_max_idle_time_in_seconds: Int = 60 * 1) {
 
-  private val actor = new IOBridgeActor(max_lines_kept_in_repl_output_cache, IOBridge.this, born)
+  private val actor = new IOBridgeActor(max_lines_kept_in_repl_output_cache, IOBridge.this, factory)
   def !(msg: Any) = {
     taskRunner.post(new Runnable() {
       def run() { safeOp { actor.receive(msg) } }
@@ -82,7 +82,7 @@ class IOBridge(taskRunner: TaskRunner, parameters_to_bind: Seq[NamedParam], born
   val parameters = runtime_mxbean +: println_to_wrepl +: parameters_to_bind
 }
 
-private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, born: PipedReplFactory) {
+private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, factory: PipedReplFactory) {
 
   private val io_cache: EvictingQueue[String] = EvictingQueue.create(maxKept + 1)
   private val clear_repl_io_cache = NamedParamClass("clear_repl_io_cache", "() => Unit", () => { io_cache.clear(); })
@@ -146,7 +146,7 @@ private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, born: Pip
         piped_output.connect(piped_input)
         val reader = new InputStreamReader(piped_input)
 
-        repl = Some(born(reader, bridge.writer, "<who>"))
+        repl = Some(factory(reader, bridge.writer, "<who>"))
         io_cache.iterator().asScala.foreach { x => channel.writeString(x) }
         repl.map {
           _.loop(true,

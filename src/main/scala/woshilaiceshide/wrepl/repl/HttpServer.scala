@@ -14,7 +14,18 @@ import spray.can.HttpRequestProcessor
 import spray.can.HttpChannelWrapper
 import spray.can.HttpChannelHandlerFactory
 
-class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge) extends PlainHttpChannelHandler {
+object HttpServer {
+
+  trait AuthenticationOffice {
+    //return user's name if authenticated, otherwise oone.
+    def authenticate(request: HttpRequest): Option[String]
+  }
+
+}
+
+import HttpServer._
+
+class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, office: AuthenticationOffice) extends PlainHttpChannelHandler {
 
   private val taskRunner = new TaskRunner() {
     def post(runnable: Runnable) {
@@ -90,15 +101,6 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge) ext
       }
     case x @ HttpRequest(HttpMethods.POST, Uri.Path("/login"), HttpCharsets.`UTF-8`, _, _) => {
       channel.respond {
-        val json = x.entity.asString(HttpCharsets.`UTF-8`).parseJson
-        (json.str("user"), json.str("password")) match {
-          case (Some(user), Some(password)) => {
-
-          }
-          case _ => {
-            new HttpResponse(400)
-          }
-        }
         new HttpResponse(404)
       }
     }
