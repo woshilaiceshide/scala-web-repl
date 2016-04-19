@@ -51,7 +51,7 @@ Or if you use sbt-native-packager, then add the following into build.sbt:
 
 	libraryDependencies += "woshilaiceshide" %% "scala-web-repl" % "2.0" withSources()
 	
-	bashScriptExtraDefines += """addJava "-javaagent:${lib_dir}/woshilaiceshide.scala-web-repl_2.11-1.0.jar""""
+	bashScriptExtraDefines += """addJava "-javaagent:${lib_dir}/woshilaiceshide.scala-web-repl_2.11-2.0.jar""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.address=0.0.0.0""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.port=8484""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.authenticate.user=jim""""
@@ -59,7 +59,8 @@ Or if you use sbt-native-packager, then add the following into build.sbt:
 
 Note: 
 * If `'wrepl.listen.address'` is not specified, it will be `'0.0.0.0'`, and `'wrepl.listen.port'` defaults to `'8484'`.
-* If it used as a java agent, you can not bind parameters to repl, SO, just keep the objects you want to manipulate in the web repl in some `'Scala Objects'` or `'static fields of some Java Classes'`.
+* If used as a java agent, you can not bind parameters to repl, SO, just keep the objects you want to manipulate in the web repl in some `'Scala Objects'` or `'static fields of some Java Classes'`.
+* If used as a java agent, only one user/password can be supplied. 
 
 ## How to Manipulate It?
 After started, browse http://${host}:${port}/asset/wrepl.html . Type scala expressions in the terminal, which will be executed in the remote jvm.
