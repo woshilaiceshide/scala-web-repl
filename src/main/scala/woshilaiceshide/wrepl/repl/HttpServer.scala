@@ -91,6 +91,16 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, off
 
   }
 
+  private def copy_cookies(to_response: HttpResponse, from_request: HttpRequest, exculde: String*) = {
+
+  }
+  private def temporary_redirect(url: String) = {
+
+  }
+  private def to_login_cookie(user: String, md5: String) = {
+
+  }
+
   import spray.json._
   import woshilaiceshide.wrepl.util.Utility._
   private val ASSET_PATH = Uri.Path("/asset/")
@@ -100,6 +110,11 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, off
         fromResource(path.path.toString())
       }
     case x @ HttpRequest(HttpMethods.POST, Uri.Path("/login"), HttpCharsets.`UTF-8`, _, _) => {
+      channel.respond {
+        new HttpResponse(404)
+      }
+    }
+    case x @ HttpRequest(HttpMethods.POST, Uri.Path("/logout"), HttpCharsets.`UTF-8`, _, _) => {
       channel.respond {
         new HttpResponse(404)
       }
