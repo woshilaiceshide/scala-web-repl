@@ -32,7 +32,7 @@ scalaVersion := "2.11.8"
 
 scalacOptions := Seq("-unchecked", "-deprecation","-optimise", "-encoding", "utf8", "-Yno-adapted-args")
 
-javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.7", "-target", "1.7", "-g:vars")
+javacOptions ++= Seq("-Xlint:deprecation", "-Xlint:unchecked", "-source", "1.8", "-target", "1.8", "-g:vars")
 
 retrieveManaged := false
 
@@ -46,9 +46,9 @@ resolvers += Resolver.file("Local", file( Path.userHome.absolutePath + "/.ivy2/l
 
 libraryDependencies += "io.spray" %% "spray-json" % "1.3.2"
 
-libraryDependencies += "com.google.guava" % "guava" % "18.0"
+libraryDependencies += "com.google.guava" % "guava" % "19.0"
 
-libraryDependencies += "woshilaiceshide" %% "s-server" % "1.1"
+libraryDependencies += "woshilaiceshide" %% "s-server" % "2.1"
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.11.8"
 libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.8"

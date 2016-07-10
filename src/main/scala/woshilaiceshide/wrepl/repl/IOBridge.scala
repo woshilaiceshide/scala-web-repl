@@ -5,7 +5,7 @@ import spray.json.DefaultJsonProtocol._
 
 import com.google.common.collect.EvictingQueue
 
-import spray.can.WebSocketChannelWrapper
+import woshilaiceshide.sserver.http.WebSocketChannel
 
 import scala.collection.JavaConverters._
 
@@ -23,15 +23,15 @@ object IOBridge {
   }
 
   //commands that the io bridge actor should respond with
-  case class Connect(channel: WebSocketChannelWrapper, force: Boolean)
-  case class Disconnect(channel: WebSocketChannelWrapper)
+  case class Connect(channel: WebSocketChannel, force: Boolean)
+  case class Disconnect(channel: WebSocketChannel)
   private[repl] case class CheckDisconnection(connection_behavior_id: Int)
   private[repl] case class ReplDied(repl: PipedRepl)
 
   case class RegisterPipeAndCompleter(repl: PipedRepl, output: PipedOutputStream, completer: Completion.ScalaCompleter)
 
   case class Write(cbuf: Array[Char], off: Int, len: Int)
-  case class ClientInput(s: String, channel: WebSocketChannelWrapper)
+  case class ClientInput(s: String, channel: WebSocketChannel)
 
   def turn2ClientCmdJsString(cmd: String, fields: (String, String)*) = {
     val js = JsObject(("cmd" -> JsString(cmd)) +: fields.map { x => (x._1, JsString(x._2)) }: _*)
@@ -87,11 +87,11 @@ private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, factory: 
   private val io_cache: EvictingQueue[String] = EvictingQueue.create(maxKept + 1)
   private val clear_repl_io_cache = NamedParamClass("clear_repl_io_cache", "() => Unit", () => { io_cache.clear(); })
 
-  private def write_repl_output(channel: WebSocketChannelWrapper, s: String) = {
+  private def write_repl_output(channel: WebSocketChannel, s: String) = {
     channel.writeString(IOBridge.turn2ClientCmdJsString("repl-output", "msg" -> s))
   }
 
-  private def write_bindings_to_client(channel: WebSocketChannelWrapper, parameters: NamedParam*) = {
+  private def write_bindings_to_client(channel: WebSocketChannel, parameters: NamedParam*) = {
     write_repl_output(channel, s"${bridge.parameters.length + 1} imported parameters those can be used in the interaction.")
     val numbered = bridge.parameters zip (1 to bridge.parameters.size)
 
@@ -101,7 +101,7 @@ private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, factory: 
     write_repl_output(channel, IOBridge.formatNamedParam(bridge.parameters.size + 1, clear_repl_io_cache))
   }
 
-  private var channel = Option.empty[WebSocketChannelWrapper]
+  private var channel = Option.empty[WebSocketChannel]
   private var pipe = Option.empty[OutputStream]
   private var repl = Option.empty[PipedRepl]
   private var completer: Completion.ScalaCompleter = Completion.NullCompleter
@@ -199,7 +199,7 @@ private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, factory: 
     case ReplDied(repl) if this.repl == Some(repl) => {
       this.channel.map { c =>
         c.writeString(IOBridge.turn2ClientCmdJsString("internal-server-error"))
-        val code = woshilaiceshide.sserver.httpd.WebSocket13.CloseCode.INTERNAL_SERVER_ERROR
+        val code = woshilaiceshide.sserver.http.WebSocket13.CloseCode.INTERNAL_SERVER_ERROR
         c.close(Some(code))
       }
       io_cache.clear()
@@ -255,7 +255,7 @@ private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, factory: 
         }
         case Some("completion") if Some(c) == channel => {
 
-          def writeCompletion(candidates: Completion.Candidates, prefix: String, prev_cursor: Int, channel: WebSocketChannelWrapper) = {
+          def writeCompletion(candidates: Completion.Candidates, prefix: String, prev_cursor: Int, channel: WebSocketChannel) = {
             val cur_cursor = candidates.cursor
 
             val js = JsObject("cmd" -> JsString("completion"),

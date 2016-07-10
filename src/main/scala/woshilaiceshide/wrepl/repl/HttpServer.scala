@@ -1,23 +1,18 @@
 package woshilaiceshide.wrepl.repl
 
-import woshilaiceshide.sserver.httpd._
-import woshilaiceshide.sserver.httpd.WebSocket13
-import woshilaiceshide.sserver.nio.NioSocketServer
+import woshilaiceshide.sserver.nio._
+import woshilaiceshide.sserver.http._
+import woshilaiceshide.sserver.http.WebSocket13
 import WebSocket13.WSText
 import spray.can._
 import spray.http._
 import spray.http.HttpEntity.apply
 import spray.http.StatusCode.int2StatusCode
-import spray.can.WebSocketChannelHandler
-import spray.can.PlainHttpChannelHandler
-import spray.can.HttpRequestProcessor
-import spray.can.HttpChannelWrapper
-import spray.can.HttpChannelHandlerFactory
 
 object HttpServer {
 
   trait AuthenticationOffice {
-    //return user's name if authenticated, otherwise oone.
+    //return user's name if authenticated, otherwise none.
     def authenticate(request: HttpRequest): Option[String]
   }
 
@@ -25,21 +20,21 @@ object HttpServer {
 
 import HttpServer._
 
-class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, office: AuthenticationOffice) extends PlainHttpChannelHandler {
+class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, office: AuthenticationOffice) extends HttpChannelHandler {
 
   private val taskRunner = new TaskRunner() {
     def post(runnable: Runnable) {
-      server.post(runnable)
+      server.post_to_io_thread(runnable)
     }
     def scheduleFuzzily(task: Runnable, delayInSeconds: Int) {
-      server.scheduleFuzzily(task, delayInSeconds)
+      server.schedule_fuzzily(task, delayInSeconds)
     }
     def registerOnTermination[T](code: => T): Boolean = {
-      server.registerOnTermination(code)
+      server.register_on_termination(code)
     }
   }
 
-  def build_default_wrepl_websocket_handler(): WebSocketChannelWrapper => WebSocketChannelHandler = c => {
+  def build_default_wrepl_websocket_handler(): WebSocketChannel => WebSocketChannelHandler = c => {
 
     val bridge = born(taskRunner)
 
@@ -49,7 +44,7 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, off
         c.close(WebSocket13.CloseCode.NORMAL_CLOSURE_OPTION)
       }
 
-      def becomeWritable() {}
+      def channelWritable() {}
       def pongReceived(frame: WebSocket13.WSFrame): Unit = {}
 
       def frameReceived(frame: WebSocket13.WSFrame): Unit = {
@@ -66,7 +61,7 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, off
 
   }
 
-  def channelClosed(channel: HttpChannelWrapper): Unit = {}
+  def channelClosed(channel: HttpChannel): Unit = {}
 
   import spray.http._
   private def fromResource(path: String) = {
@@ -104,35 +99,57 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, off
   import spray.json._
   import woshilaiceshide.wrepl.util.Utility._
   private val ASSET_PATH = Uri.Path("/asset/")
-  def requestReceived(request: HttpRequestPart, channel: HttpChannelWrapper): HttpRequestProcessor = request match {
+  def requestReceived(request: HttpRequest, channel: HttpChannel, classifier: RequestClassifier): ResponseAction = request match {
     case HttpRequest(HttpMethods.GET, path, _, _, _) if path.path.startsWith(ASSET_PATH) =>
-      channel.respond {
-        fromResource(path.path.toString())
-      }
-    case x @ HttpRequest(HttpMethods.POST, Uri.Path("/login"), HttpCharsets.`UTF-8`, _, _) => {
-      channel.respond {
-        new HttpResponse(404)
-      }
-    }
-    case x @ HttpRequest(HttpMethods.POST, Uri.Path("/logout"), HttpCharsets.`UTF-8`, _, _) => {
-      channel.respond {
-        new HttpResponse(404)
-      }
-    }
+      channel.writeResponse(fromResource(path.path.toString()), write_server_and_date_headers = true)
+      ResponseAction.responseNormally
+
+    case x @ HttpRequest(HttpMethods.POST, Uri.Path("/login"), HttpCharsets.`UTF-8`, _, _) =>
+      channel.writeResponse(new HttpResponse(404), write_server_and_date_headers = true)
+      ResponseAction.responseNormally
+
+    case x @ HttpRequest(HttpMethods.POST, Uri.Path("/logout"), HttpCharsets.`UTF-8`, _, _) =>
+      channel.writeResponse(new HttpResponse(404), write_server_and_date_headers = true)
+      ResponseAction.responseNormally
+
     case x @ HttpRequest(HttpMethods.GET, Uri.Path("/wrepl"), _, _, _) =>
-      channel.toWebSocketChannelHandler(x, Nil, 1024, build_default_wrepl_websocket_handler())
+      ResponseAction.acceptWebsocket { build_default_wrepl_websocket_handler() }
+
     case _: HttpRequest =>
-      channel.respond {
-        new HttpResponse(404)
-      }
-    case _ => {
+      channel.writeResponse(new HttpResponse(404), write_server_and_date_headers = true)
+      ResponseAction.responseNormally
+
+    case _ =>
       //I DOES NOT support chunked request.
-      channel.respond { new HttpResponse(400) }
-    }
+      channel.writeResponse(new HttpResponse(400), write_server_and_date_headers = true)
+      ResponseAction.responseNormally
   }
 
-  protected val factory = new HttpChannelHandlerFactory(this, 8)
-  protected def default_server: NioSocketServer = new NioSocketServer(interface, port, factory, max_bytes_waiting_for_written_per_channel = 128 * 1024, enable_fuzzy_scheduler = true)
+  private val http_configurator = new HttpConfigurator(max_request_in_pipeline = 8, use_direct_byte_buffer_for_cached_bytes_rendering = false)
+
+  protected val factory = new HttpChannelHandlerFactory(this, http_configurator)
+
+  val listening_channel_configurator: ServerSocketChannelWrapper => Unit = wrapper => {
+    wrapper.setOption[java.lang.Boolean](java.net.StandardSocketOptions.SO_REUSEADDR, true)
+    wrapper.setBacklog(1024 * 8)
+  }
+
+  val accepted_channel_configurator: SocketChannelWrapper => Unit = wrapper => {
+    wrapper.setOption[java.lang.Boolean](java.net.StandardSocketOptions.TCP_NODELAY, true)
+  }
+
+  val configurator = XNioConfigurator(
+    count_for_reader_writers = 0,
+    enable_fuzzy_scheduler = true,
+    listening_channel_configurator = listening_channel_configurator,
+    accepted_channel_configurator = accepted_channel_configurator,
+    max_bytes_waiting_for_written_per_channel = 128 * 1024)
+
+  protected def default_server: SelectorRunner = NioSocketServer(
+    interface,
+    port,
+    factory,
+    configurator)
 
   lazy val server = default_server
 
