@@ -146,7 +146,8 @@ private[repl] class IOBridgeActor(maxKept: Int = 10, bridge: IOBridge, factory: 
         piped_output.connect(piped_input)
         val reader = new InputStreamReader(piped_input)
 
-        repl = Some(factory(reader, bridge.writer, "<who>"))
+        //TODO hard coded right currently. user should be retrieved from the http requests in the future. 
+        repl = Some(factory(reader, bridge.writer, "root"))
         io_cache.iterator().asScala.foreach { x => channel.writeString(x) }
         repl.map {
           _.loop(true,

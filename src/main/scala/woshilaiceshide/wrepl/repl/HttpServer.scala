@@ -34,10 +34,11 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, off
     }
   }
 
-  def build_default_wrepl_websocket_handler(): WebSocketChannel => WebSocketChannelHandler = c => {
+  def build_default_wrepl_websocket_handler(request: HttpRequest): WebSocketChannel => WebSocketChannelHandler = c => {
 
     val bridge = born(taskRunner)
 
+    c.tryAccept(request, Nil, Nil)
     new WebSocketChannelHandler() {
 
       def inputEnded() = {
@@ -101,7 +102,8 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, off
   private val ASSET_PATH = Uri.Path("/asset/")
   def requestReceived(request: HttpRequest, channel: HttpChannel, classifier: RequestClassifier): ResponseAction = request match {
     case HttpRequest(HttpMethods.GET, path, _, _, _) if path.path.startsWith(ASSET_PATH) =>
-      channel.writeResponse(fromResource(path.path.toString()), write_server_and_date_headers = true)
+      val response = fromResource(path.path.toString())
+      channel.writeResponse(response, size_hint = response.entity.data.length.toInt + 1024 * 4, write_server_and_date_headers = true)
       ResponseAction.responseNormally
 
     case x @ HttpRequest(HttpMethods.POST, Uri.Path("/login"), HttpCharsets.`UTF-8`, _, _) =>
@@ -113,7 +115,7 @@ class HttpServer(interface: String, port: Int, born: TaskRunner => IOBridge, off
       ResponseAction.responseNormally
 
     case x @ HttpRequest(HttpMethods.GET, Uri.Path("/wrepl"), _, _, _) =>
-      ResponseAction.acceptWebsocket { build_default_wrepl_websocket_handler() }
+      ResponseAction.acceptWebsocket { build_default_wrepl_websocket_handler(x) }
 
     case _: HttpRequest =>
       channel.writeResponse(new HttpResponse(404), write_server_and_date_headers = true)

@@ -185,7 +185,6 @@ class TypeGuardian(val global: Global, type_rules: Seq[TypeRule]) extends Plugin
         }
 
         private def check_type_sign(tree: Tree, type_sign: String): Boolean = {
-          println(s"a type >> ${type_sign}")
 
           if (type_sign == "" || type_sign.endsWith(".type")) {
             //typeSimpleSig_(tree.tpe, sb)
