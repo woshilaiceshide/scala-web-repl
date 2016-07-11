@@ -2,7 +2,7 @@ organization := "woshilaiceshide"
 
 name := "scala-web-repl"
 
-version := "2.0-SNAPSHOT"
+version := "2.1"
 
 description := "A scala repl which uses a web terminal as its interactive console, and it can be used as an inspector/cli for running applications, a hot code modification mechanism."
 
