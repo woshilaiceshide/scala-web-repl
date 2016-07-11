@@ -49,9 +49,9 @@ Or if you use sbt-native-packager, then add the following into build.sbt:
 
 	resolvers += "Woshilaiceshide Releases" at "http://dl.bintray.com/woshilaiceshide/maven/"
 
-	libraryDependencies += "woshilaiceshide" %% "scala-web-repl" % "2.0" withSources()
+	libraryDependencies += "woshilaiceshide" %% "scala-web-repl" % "2.1" withSources()
 	
-	bashScriptExtraDefines += """addJava "-javaagent:${lib_dir}/woshilaiceshide.scala-web-repl_2.11-2.0.jar""""
+	bashScriptExtraDefines += """addJava "-javaagent:${lib_dir}/woshilaiceshide.scala-web-repl_2.11-2.1.jar""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.address=0.0.0.0""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.listen.port=8484""""
 	bashScriptExtraDefines += """addJava "-Dwrepl.authenticate.user=jim""""
@@ -188,7 +188,7 @@ After it is launched, type the following expressions in the connected Scala-Web-
 You'll see how you controlled the actor in the running application.
 
 ## TODO
-* I'll write some utilities to help introspection for applications based on akka, spray and play. Any interested guy is appreciated.
+* write some utilities to help introspection for applications based on akka, spray and play. Any interested guy is appreciated.
 
 * How to forbid `'System.exit(-1)'`, or do more sophisticated restrictions, even authentication and authorization?
 
