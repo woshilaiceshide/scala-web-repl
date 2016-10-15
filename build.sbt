@@ -48,7 +48,7 @@ libraryDependencies += "io.spray" %% "spray-json" % "1.3.2"
 
 libraryDependencies += "com.google.guava" % "guava" % "19.0"
 
-libraryDependencies += "woshilaiceshide" %% "s-server" % "2.1"
+libraryDependencies += "woshilaiceshide" %% "s-server" % "2.2"
 
 libraryDependencies += "org.scala-lang" % "scala-reflect" % "2.11.8"
 libraryDependencies += "org.scala-lang" % "scala-compiler" % "2.11.8"
